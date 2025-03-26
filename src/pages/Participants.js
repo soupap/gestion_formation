@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Table } from 'react-bootstrap';
 import axios from 'axios';
+import { API_URL } from '../constants';
 
 const Participants = () => {
   const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/participants')
+    axios.get(API_URL + '/participants')
       .then(response => setParticipants(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -22,6 +23,7 @@ const Participants = () => {
             <th>Prénom</th>
             <th>Email</th>
             <th>Téléphone</th>
+            <th>Formations°</th>
           </tr>
         </thead>
         <tbody>
@@ -32,6 +34,7 @@ const Participants = () => {
               <td>{participant.prenom}</td>
               <td>{participant.email}</td>
               <td>{participant.tel}</td>
+              <td>{participant.formations.length}</td>
             </tr>
           ))}
         </tbody>

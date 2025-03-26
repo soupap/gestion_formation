@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Table } from 'react-bootstrap';
 import axios from 'axios';
-
+import { API_URL } from '../constants';
 const Formations = () => {
   const [formations, setFormations] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/formations')
+    axios.get(API_URL+ '/formations')
       .then(response => setFormations(response.data))
       .catch(error => console.error(error));
   }, []);
@@ -21,6 +21,10 @@ const Formations = () => {
             <th>Titre</th>
             <th>Année</th>
             <th>Durée (jours)</th>
+            <th>Domaine</th>
+            <th>Participant°</th>
+            <th>Budget</th>
+            
           </tr>
         </thead>
         <tbody>
@@ -30,6 +34,10 @@ const Formations = () => {
               <td>{formation.titre}</td>
               <td>{formation.annee}</td>
               <td>{formation.duree}</td>
+              <td>{formation.domaine.libelle}</td>
+              <td>{formation.participants.length}</td>
+              <td>{formation.budget}</td>
+              
             </tr>
           ))}
         </tbody>

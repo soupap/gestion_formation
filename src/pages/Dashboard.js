@@ -8,12 +8,19 @@ const Dashboard = () => {
         <Card.Body>
           <Card.Title>Dashboard</Card.Title>
           <Card.Text>
-            Bienvenue sur le tableau de bord de gestion de formation.
+            Bienvenue {getUserName()} role {getRole()} sur le tableau de bord de gestion de formation.
           </Card.Text>
         </Card.Body>
       </Card>
     </Container>
   );
 };
+
+function getUserName() {
+  return localStorage.getItem('username');
+}
+function getRole() {
+  return localStorage.getItem('role');
+}
 
 export default Dashboard;
