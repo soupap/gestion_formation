@@ -1,18 +1,25 @@
-import { mockFormations, mockParticipants } from '../mockData';
+import axios from 'axios';
+import { API_URL } from '../constants';
 
-// Simulate API calls with mock data
-export const getFormations = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ data: mockFormations });
-    }, 1000); // Simulate a 1-second delay
-  });
-};
+export const api = axios.create({
+  baseURL: API_URL,
+});
 
-export const getParticipants = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ data: mockParticipants });
-    }, 1000); // Simulate a 1-second delay
-  });
-};
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location = '/login';
+    }
+    return Promise.reject(error);
+  }
+);

@@ -1,44 +1,47 @@
-import React, { useState } from "react";
-import { useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from '../constants';
 
 const Login = () => {
     const navigate = useNavigate();
-
-    const username = localStorage.getItem("username");
-    useEffect(() => {
-        if (username) {
-          navigate('/dashboard');
-        }
-      }, [username, navigate]);
-
-    const [login, setLogin] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
+    // Check for existing valid token on component mount
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            navigate('/dashboard');
+        }
+    }, [navigate]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");  // Clear previous error
+        setError("");  // Reset error message on submit
 
         try {
-            const response = await axios.post(API_URL + "/utilisateurs/login", {
-                login,
-                password,
+            const response = await axios.post(API_URL + "/api/v1/auth/login", {
+                username,
+                password
             });
 
             console.log("Login Successful", response.data);
 
-            // Store user info in local storage (optional)
-            localStorage.setItem("username", response.data.login);
-            localStorage.setItem("role", response.data.role.nom);
-
-            // Redirect to dashboard
+            // Store token and redirect
+            localStorage.setItem("token", response.data.token);
+            localStorage.setItem("role", response.data.role);
+            
             navigate("/dashboard");
         } catch (error) {
-            setError("Invalid login or password");
+            console.error("Login error", error);
+            setError(error.response?.data?.message || "Login failed. Please check your credentials.");
         }
+    };
+
+    const handleRegisterRedirect = () => {
+        navigate("/register");  // Redirect to the Register page
     };
 
     return (
@@ -48,14 +51,15 @@ const Login = () => {
                 {error && <div className="alert alert-danger">{error}</div>}
                 <form onSubmit={handleSubmit}>
                     <div className="mb-3">
-                        <label className="form-label">Login</label>
+                        <label className="form-label">Username</label>
                         <input
                             type="text"
                             className="form-control"
-                            value={login}
-                            onChange={(e) => setLogin(e.target.value)}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             required
-                            onFocus={() => setError("")}  // Clear error when user starts typing
+                            autoFocus
+                            onFocus={() => setError("")}
                         />
                     </div>
                     <div className="mb-3">
@@ -66,11 +70,18 @@ const Login = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            onFocus={() => setError("")}  // Clear error when user starts typing
+                            onFocus={() => setError("")}
                         />
                     </div>
-                    <button type="submit" className="btn btn-primary w-100">
+                    <button type="submit" className="btn btn-primary w-100 mb-2">
                         Login
+                    </button>
+                    <button 
+                        type="button" 
+                        className="btn btn-link w-100 text-decoration-none" 
+                        onClick={handleRegisterRedirect}
+                    >
+                        Register
                     </button>
                 </form>
             </div>

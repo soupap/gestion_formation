@@ -2,26 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Container, Table, Alert, Spinner } from 'react-bootstrap';
 import { api } from '../services/api';
 
-const Utilisateurs = () => {
-  const [utilisateurs, setUtilisateurs] = useState([]);
+const Employeur = () => {
+  const [employeurs, setemployeurs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    api.get('/utilisateurs')
+    api.get('/employeurs')
       .then(response => {
-        setUtilisateurs(response.data);
+        setemployeurs(response.data);
         setLoading(false);
       })
       .catch(() => {
-        setError("Erreur lors du chargement des utilisateurs.");
+        setError("Erreur lors du chargement des employeurs.");
         setLoading(false);
       });
   }, []);
 
   return (
     <Container className="mt-4">
-      <h1>Liste des Utilisateurs</h1>
+      <h1>Liste des employeurs</h1>
 
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
@@ -32,15 +32,13 @@ const Utilisateurs = () => {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Rôle</th>
             </tr>
           </thead>
           <tbody>
-            {utilisateurs.map(utilisateur => (
-              <tr key={utilisateur.id}>
-                <td>{utilisateur.id}</td>
-                <td>{utilisateur.username}</td>
-                <td>{utilisateur.role}</td>
+            {employeurs.map(employeur => (
+              <tr key={employeur.id}>
+                <td>{employeur.id}</td>
+                <td>{employeur.nomEmployeur}</td>
               </tr>
             ))}
           </tbody>
@@ -50,4 +48,4 @@ const Utilisateurs = () => {
   );
 };
 
-export default Utilisateurs;
+export default Employeur;
