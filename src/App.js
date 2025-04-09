@@ -30,7 +30,7 @@ function AppRoutes() {
   
   // Check if the user is an admin (role is stored in localStorage)
   const isAdmin = localStorage.getItem('role') === 'ADMINISTRATEUR';
-
+  const isUser = localStorage.getItem('role') === 'UTILISATEUR'; // Check if the user is a formateur
   return (
     <>
       {/* Render navbar only if not on the login or register page */}
@@ -42,7 +42,8 @@ function AppRoutes() {
         
         {/* PrivateRoute protects routes that require authentication */}
         <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* Only render the dashboard if the user is not a formateur */}
+          {!isUser && <Route path="/dashboard" element={<Dashboard />} />}
           <Route path="/formations" element={<Formations />} />
           <Route path="/participants" element={<Participants />} />
 

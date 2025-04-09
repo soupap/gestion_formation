@@ -10,6 +10,7 @@ const CustomNavbar = () => {
     navigate('/');         // Redirect to login page after logout
   };
   const isAdmin = localStorage.getItem('role') === 'ADMINISTRATEUR'; // Check if the user is an admin
+  const isUser = localStorage.getItem('role') === 'UTILISATEUR'; // Check if the user is a formateur
   return (
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
@@ -17,7 +18,9 @@ const CustomNavbar = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+            {!isUser && (
+              <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
+            )}
             <Nav.Link as={Link} to="/formations">Formations</Nav.Link>
             <Nav.Link as={Link} to="/formateur">Formateur</Nav.Link>
             <Nav.Link as={Link} to="/participants">Participants</Nav.Link>

@@ -12,8 +12,13 @@ const Login = () => {
     // Check for existing valid token on component mount
     useEffect(() => {
         const token = localStorage.getItem("token");
+        const role = localStorage.getItem("role");
         if (token) {
-            navigate('/dashboard');
+            if(role === "UTILISATEUR") {
+                navigate("/formations"); // Redirect to formations page for formateur
+            }else{
+                navigate("/dashboard"); // Redirect to dashboard for admin
+            }
         }
     }, [navigate]);
 
@@ -32,8 +37,11 @@ const Login = () => {
             // Store token and redirect
             localStorage.setItem("token", response.data.token);
             localStorage.setItem("role", response.data.role);
-            
-            navigate("/dashboard");
+            if(response.data.role === "UTILISATEUR") {
+                navigate("/formations"); // Redirect to formations page for formateur
+            }else{
+                navigate("/dashboard"); // Redirect to dashboard for admin
+            }
         } catch (error) {
             console.error("Login error", error);
             setError(error.response?.data?.message || "Login failed. Please check your credentials.");
