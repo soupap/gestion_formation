@@ -3,6 +3,7 @@ import { Container, Table, Alert, Spinner, Button, Modal, Form } from 'react-boo
 import { api } from '../services/api';
 
 const Domaines = () => {
+  const userRole = localStorage.getItem("role");
   const [domaines, setDomaines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,11 +52,11 @@ const Domaines = () => {
   return (
     <Container className="mt-4">
       <h1>Liste des Domaines</h1>
-
+      {userRole === "ADMINISTRATEUR" && (
       <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
         Ajouter un Domaine
       </Button>
-
+      )}
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
 

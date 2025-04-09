@@ -16,6 +16,7 @@ const AddParticipant = ({ onParticipantAdded }) => {
   const [profils, setProfils] = useState([]);
   const [showAddProfil, setShowAddProfil] = useState(false);
   const [newProfilLibelle, setNewProfilLibelle] = useState('');
+  const userRole = localStorage.getItem("role"); // Get user role from local storage
 
   // Load profiles on component mount
   useEffect(() => {
@@ -145,29 +146,48 @@ const AddParticipant = ({ onParticipantAdded }) => {
         <Form.Group className="mb-3">
           <Form.Label>Profil</Form.Label>
           <Row>
-            <Col xs={10}>
-              <Form.Select
-                value={profilId}
-                onChange={(e) => setProfilId(e.target.value)}
-                required
-              >
-                <option value="">Sélectionner un profil</option>
-                {profils.map((profil) => (
-                  <option key={profil.id} value={profil.id}>
-                    {profil.libelle}
-                  </option>
-                ))}
-              </Form.Select>
-            </Col>
-            <Col xs={2}>
-              <Button
-                variant="outline-secondary"
-                onClick={() => setShowAddProfil(true)}
-                title="Ajouter un nouveau profil"
-              >
-                <FaPlus />
-              </Button>
-            </Col>
+            {userRole === "ADMINISTRATEUR" ? (
+              <>
+                <Col xs={10}>
+                  <Form.Select
+                    value={profilId}
+                    onChange={(e) => setProfilId(e.target.value)}
+                    required
+                  >
+                    <option value="">Sélectionner un profil</option>
+                    {profils.map((profil) => (
+                      <option key={profil.id} value={profil.id}>
+                        {profil.libelle}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Col>
+                <Col xs={2}>
+                  <Button
+                    variant="outline-secondary"
+                    onClick={() => setShowAddProfil(true)}
+                    title="Ajouter un nouveau profil"
+                  >
+                    <FaPlus />
+                  </Button>
+                </Col>
+              </>
+            ) : (
+              <Col xs={12}>
+                <Form.Select
+                  value={profilId}
+                  onChange={(e) => setProfilId(e.target.value)}
+                  required
+                >
+                  <option value="">Sélectionner un profil</option>
+                  {profils.map((profil) => (
+                    <option key={profil.id} value={profil.id}>
+                      {profil.libelle}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Col>
+            )}
           </Row>
         </Form.Group>
 

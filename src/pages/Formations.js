@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Table, Alert, Spinner, Modal, Button, Badge , OverlayTrigger, Tooltip ,Form } from 'react-bootstrap';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt,FaPlus, FaCalendar, FaMoneyBillWave } from 'react-icons/fa';
+import { Container, Table, Alert, Spinner, Modal, Button, Badge, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
+import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaPlus, FaCalendar, FaMoneyBillWave } from 'react-icons/fa';
 import AddFormation from './AddFormation';
 import { api } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const Formations = () => {
+  const navigate = useNavigate();
   const [formations, setFormations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -149,52 +151,61 @@ const Formations = () => {
                   </Badge>
                 </td>
                 {/* Modified Actions Column */}
-      <td className="text-center">
-        <div className="d-flex gap-2 justify-content-center">
-          <OverlayTrigger overlay={<Tooltip>Add Participant</Tooltip>}>
-            <Button
-              variant="info"
-              size="sm"
-              className="p-2"
-              onClick={() => {
-                setSelectedFormation(formation);
-                fetchParticipants();
-                setShowAddParticipantModal(true);
-              }}
-            >
-              <FaUserPlus />
-            </Button>
-          </OverlayTrigger>
+                <td className="text-center">
+                  <div className="d-flex gap-2 justify-content-center">
+                    <OverlayTrigger overlay={<Tooltip>Add Participant</Tooltip>}>
+                      <Button
+                        variant="info"
+                        size="sm"
+                        className="p-2"
+                        onClick={() => {
+                          setSelectedFormation(formation);
+                          fetchParticipants();
+                          setShowAddParticipantModal(true);
+                        }}
+                      >
+                        <FaUserPlus />
+                      </Button>
+                    </OverlayTrigger>
 
-          <OverlayTrigger overlay={<Tooltip>Details</Tooltip>}>
-            <Button variant="light" size="sm" className="p-2">
-              <FaInfoCircle />
-            </Button>
-          </OverlayTrigger>
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip id={`tooltip-${formation.id}`}>Details</Tooltip>}
+                    >
+                      <Button
+                        variant="light"
+                        size="sm"
+                        className="p-2"
+                        onClick={() => navigate(`/formations/${formation.id}`)}
+                      >
+                        <FaInfoCircle />
+                      </Button>
+                    </OverlayTrigger>
 
-          <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
-            <Button
-              variant="danger"
-              size="sm"
-              className="p-2"
-              onClick={() => {
-                setSelectedFormation(formation);
-                setShowDeleteModal(true);
-              }}
-            >
-              <FaTrashAlt />
-            </Button>
-          </OverlayTrigger>
-        </div>
-      </td>
+
+                    <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        className="p-2"
+                        onClick={() => {
+                          setSelectedFormation(formation);
+                          setShowDeleteModal(true);
+                        }}
+                      >
+                        <FaTrashAlt />
+                      </Button>
+                    </OverlayTrigger>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
         </Table>
       )}
 
-            {/* Add Participant Modal */}
-            <Modal show={showAddParticipantModal} onHide={() => setShowAddParticipantModal(false)}>
+      {/* Add Participant Modal */}
+      <Modal show={showAddParticipantModal} onHide={() => setShowAddParticipantModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add Participant</Modal.Title>
         </Modal.Header>

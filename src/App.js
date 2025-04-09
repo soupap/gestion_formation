@@ -12,6 +12,7 @@ import PrivateRoute from './components/PrivateRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Employeur from './pages/Employeur';
 import Formateur from './pages/Formateur';
+import FormationDetails from './pages/FormationDetails';
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function AppRoutes() {
           
           <Route path="/domaine" element={<Domaine />} />
           <Route path="/formateur" element={<Formateur />} />
+          <Route path="/formations/:id" element={<FormationDetails />} />
           <Route path="/employeur" element={<Employeur />} />
         </Route>
       </Routes>
