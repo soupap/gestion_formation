@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Table, Alert, Spinner, Modal, Button, Badge, OverlayTrigger, Tooltip, Form } from 'react-bootstrap';
+import { Container, Table, Alert, Spinner, Modal, Button, Badge, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaPlus, FaCalendar, FaMoneyBillWave } from 'react-icons/fa';
 import AddFormation from './AddFormation';
 import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
+import AddParticipantToFormationModal from './AddParticipantToFormation';
+
 
 const Formations = () => {
   const navigate = useNavigate();
@@ -14,8 +16,9 @@ const Formations = () => {
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState(null);
-  const [participantsList, setParticipantsList] = useState([]);
-  const [selectedParticipantId, setSelectedParticipantId] = useState('');
+  const [allParticipants, setAllParticipants] = useState([]);
+  const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
+  const [participantLoading, setParticipantLoading] = useState(false);
 
   useEffect(() => {
     fetchFormations();
@@ -34,22 +37,47 @@ const Formations = () => {
       });
   };
 
-  const fetchParticipants = () => {
+  const fetchParticipants = (formationId) => {
+    setParticipantLoading(true);
     api.get('/participants')
-      .then(response => setParticipantsList(response.data))
-      .catch(() => setError('Error loading participants'));
+      .then(response => {
+        // Get the list of already enrolled participant IDs
+        const formation = formations.find(f => f.id === formationId);
+        const enrolledIds = formation?.participants?.map(p => p.id) || [];
+        
+        // Filter out already enrolled participants
+        const availableParticipants = response.data.filter(
+          participant => !enrolledIds.includes(participant.id)
+        );
+        
+        setAllParticipants(availableParticipants);
+        setParticipantLoading(false);
+      })
+      .catch(() => {
+        setError('Error loading participants');
+        setParticipantLoading(false);
+      });
   };
 
-  const handleAddParticipant = () => {
-    if (!selectedParticipantId || !selectedFormation) return;
-
-    api.put(`/participants/${selectedParticipantId}/formations/${selectedFormation.id}`)
+  const handleAddParticipants = () => {
+    console.log('Selected Participants:', selectedParticipantIds);
+    console.log('Selected Formation:', selectedFormation);
+    //if (!selectedParticipantIds.length || !selectedFormation) return;
+    api.post(`/formations/${selectedFormation.id}/add_participants`, selectedParticipantIds)
       .then(() => {
         fetchFormations();
         setShowAddParticipantModal(false);
-        setSelectedParticipantId('');
+        setSelectedParticipantIds([]);
       })
-      .catch(() => setError('Error adding participant'));
+      .catch(() => setError('Error adding participants'));
+  };
+
+  const toggleParticipantSelection = (participantId) => {
+    setSelectedParticipantIds(prev => 
+      prev.includes(participantId)
+        ? prev.filter(id => id !== participantId)
+        : [...prev, participantId]
+    );
   };
 
   const handleDeleteFormation = () => {
@@ -63,8 +91,8 @@ const Formations = () => {
       .catch(() => setError('Error deleting formation'));
   };
 
-  const handleFormationAdded = (newFormation) => {
-    setFormations(prev => [newFormation, ...prev]);
+  const handleFormationAdded = () => {
+    fetchFormations();
     setShowModal(false);
   };
 
@@ -150,17 +178,16 @@ const Formations = () => {
                     {formation.participants?.length || 0}
                   </Badge>
                 </td>
-                {/* Modified Actions Column */}
                 <td className="text-center">
                   <div className="d-flex gap-2 justify-content-center">
-                    <OverlayTrigger overlay={<Tooltip>Add Participant</Tooltip>}>
+                    <OverlayTrigger overlay={<Tooltip>Add Participants</Tooltip>}>
                       <Button
                         variant="info"
                         size="sm"
                         className="p-2"
                         onClick={() => {
                           setSelectedFormation(formation);
-                          fetchParticipants();
+                          fetchParticipants(formation.id);
                           setShowAddParticipantModal(true);
                         }}
                       >
@@ -168,10 +195,7 @@ const Formations = () => {
                       </Button>
                     </OverlayTrigger>
 
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id={`tooltip-${formation.id}`}>Details</Tooltip>}
-                    >
+                    <OverlayTrigger overlay={<Tooltip>Details</Tooltip>}>
                       <Button
                         variant="light"
                         size="sm"
@@ -181,7 +205,6 @@ const Formations = () => {
                         <FaInfoCircle />
                       </Button>
                     </OverlayTrigger>
-
 
                     <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
                       <Button
@@ -204,35 +227,19 @@ const Formations = () => {
         </Table>
       )}
 
-      {/* Add Participant Modal */}
-      <Modal show={showAddParticipantModal} onHide={() => setShowAddParticipantModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Add Participant</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Select
-              value={selectedParticipantId}
-              onChange={(e) => setSelectedParticipantId(e.target.value)}
-            >
-              <option value="">Select Participant</option>
-              {participantsList.map(participant => (
-                <option key={participant.id} value={participant.id}>
-                  {participant.nom} {participant.prenom}
-                </option>
-              ))}
-            </Form.Select>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowAddParticipantModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleAddParticipant}>
-            Add Participant
-          </Button>
-        </Modal.Footer>
-      </Modal>
+    <AddParticipantToFormationModal
+      show={showAddParticipantModal}
+      onHide={() => {
+        setShowAddParticipantModal(false);
+        setSelectedParticipantIds([]);
+      }}
+      formation={selectedFormation}
+      participants={allParticipants}
+      loading={participantLoading}
+      selectedIds={selectedParticipantIds}
+      onToggle={toggleParticipantSelection}
+      onConfirm={handleAddParticipants}
+    />
 
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
@@ -251,6 +258,7 @@ const Formations = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
       {/* Add Formation Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>

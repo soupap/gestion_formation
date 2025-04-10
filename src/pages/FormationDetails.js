@@ -7,8 +7,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import AddParticipant from './AddParticipant';
-
+import AddParticipantToFormationModal from './AddParticipantToFormation';
 
 const FormationDetails = () => {
   const { id } = useParams();
@@ -16,26 +15,44 @@ const FormationDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-const [showModalParticipant, setShowModalParticipant] = useState(false);
+  const [showModalParticipant, setShowModalParticipant] = useState(false);
   const [participantToDelete, setParticipantToDelete] = useState(null);
+  const [allParticipants, setAllParticipants] = useState([]);
+  const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
+  const [participantLoading, setParticipantLoading] = useState(false);
   const userRole = localStorage.getItem("role");
 
   useEffect(() => {
     const fetchData = async () => {
-        setLoading(true);
-        api.get('/formations/' + id)
-        .then(response => {
-          setFormation(response.data);
-          setLoading(false);
-        })
-        .catch(error => {
-          setError('Error loading formation details');
-          setLoading(false);
-        });
+      setLoading(true);
+      try {
+        const response = await api.get(`/formations/${id}`);
+        setFormation(response.data);
+      } catch (error) {
+        setError('Error loading formation details');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
   }, [id]);
+
+  const fetchParticipants = async () => {
+    setParticipantLoading(true);
+    try {
+      const response = await api.get('/participants');
+      const enrolledIds = formation?.participants?.map(p => p.id) || [];
+      const availableParticipants = response.data.filter(
+        participant => !enrolledIds.includes(participant.id)
+      );
+      setAllParticipants(availableParticipants);
+    } catch (error) {
+      setError('Error loading participants');
+    } finally {
+      setParticipantLoading(false);
+    }
+  };
 
   const formatDate = (dateString) => {
     return format(parseISO(dateString), 'PP', { locale: fr });
@@ -54,12 +71,24 @@ const [showModalParticipant, setShowModalParticipant] = useState(false);
     }
   };
 
-  const handleParticipantAdded = (newParticipant) => {
-    setFormation(prev => ({
-      ...prev,
-      participants: [...prev.participants, newParticipant]
-    }));
-    setShowModalParticipant(false);
+  const handleAddParticipants = async () => {
+    try {
+      await api.post(`/formations/${id}/add_participants`, selectedParticipantIds);
+      const updatedFormation = await api.get(`/formations/${id}`);
+      setFormation(updatedFormation.data);
+      setShowModalParticipant(false);
+      setSelectedParticipantIds([]);
+    } catch (error) {
+      setError('Error adding participants');
+    }
+  };
+
+  const toggleParticipantSelection = (participantId) => {
+    setSelectedParticipantIds(prev =>
+      prev.includes(participantId)
+        ? prev.filter(id => id !== participantId)
+        : [...prev, participantId]
+    );
   };
 
   const confirmDelete = (participant) => {
@@ -164,7 +193,10 @@ const [showModalParticipant, setShowModalParticipant] = useState(false);
               variant="success" 
               size="sm" 
               className="ms-3"
-              onClick={() => setShowModalParticipant(true)}
+              onClick={() => {
+                fetchParticipants();
+                setShowModalParticipant(true);
+              }}
             >
               Ajouter Participant
             </Button>
@@ -230,12 +262,18 @@ const [showModalParticipant, setShowModalParticipant] = useState(false);
           </Button>
         </Modal.Footer>
       </Modal>
-      {/* Modal for Adding Participant */}
-      <Modal show={showModalParticipant} onHide={() => setShowModalParticipant(false)}>
-        <Modal.Body>
-          <AddParticipant onParticipantAdded={handleParticipantAdded} setShowModal={setShowModalParticipant} />
-        </Modal.Body>
-      </Modal>
+
+      {/* Add Participants Modal */}
+      <AddParticipantToFormationModal
+        show={showModalParticipant}
+        onHide={() => setShowModalParticipant(false)}
+        formation={formation}
+        participants={allParticipants}
+        loading={participantLoading}
+        selectedIds={selectedParticipantIds}
+        onToggle={toggleParticipantSelection}
+        onConfirm={handleAddParticipants}
+      />
     </Container>
   );
 };

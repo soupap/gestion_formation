@@ -13,6 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Employeur from './pages/Employeur';
 import Formateur from './pages/Formateur';
 import FormationDetails from './pages/FormationDetails';
+import ParticipantDetail from './pages/ParticipantDetail';
 
 function App() {
   return (
@@ -54,7 +55,7 @@ function AppRoutes() {
               <Route path="/utilisateur" element={<Utilisateur />} />
             </>
           )}
-          
+          <Route path="/participants/:id" element={<ParticipantDetail />} />
           <Route path="/domaine" element={<Domaine />} />
           <Route path="/formateur" element={<Formateur />} />
           <Route path="/formations/:id" element={<FormationDetails />} />
