@@ -12,26 +12,30 @@ import AddParticipantToFormationModal from './AddParticipantToFormation';
 const FormationDetails = () => {
   const { id } = useParams();
   const [formation, setFormation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState({
+    formation: true,
+    participants: false,
+    addParticipants: false,
+    deleteParticipant: false
+  });
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showModalParticipant, setShowModalParticipant] = useState(false);
   const [participantToDelete, setParticipantToDelete] = useState(null);
   const [allParticipants, setAllParticipants] = useState([]);
   const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
-  const [participantLoading, setParticipantLoading] = useState(false);
   const userRole = localStorage.getItem("role");
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      setLoading(prev => ({ ...prev, formation: true }));
       try {
         const response = await api.get(`/formations/${id}`);
         setFormation(response.data);
       } catch (error) {
         setError('Error loading formation details');
       } finally {
-        setLoading(false);
+        setLoading(prev => ({ ...prev, formation: false }));
       }
     };
 
@@ -39,7 +43,7 @@ const FormationDetails = () => {
   }, [id]);
 
   const fetchParticipants = async () => {
-    setParticipantLoading(true);
+    setLoading(prev => ({ ...prev, participants: true }));
     try {
       const response = await api.get('/participants');
       const enrolledIds = formation?.participants?.map(p => p.id) || [];
@@ -50,7 +54,7 @@ const FormationDetails = () => {
     } catch (error) {
       setError('Error loading participants');
     } finally {
-      setParticipantLoading(false);
+      setLoading(prev => ({ ...prev, participants: false }));
     }
   };
 
@@ -59,8 +63,14 @@ const FormationDetails = () => {
   };
 
   const handleDeleteParticipant = async () => {
+    if (!participantToDelete) return;
+    
+    setLoading(prev => ({ ...prev, deleteParticipant: true }));
     try {
+      // Following the same pattern as your working example
       await api.delete(`/participants/${participantToDelete.id}/formations/${id}`);
+      
+      // Update state to match the working pattern
       setFormation(prev => ({
         ...prev,
         participants: prev.participants.filter(p => p.id !== participantToDelete.id)
@@ -68,18 +78,41 @@ const FormationDetails = () => {
       setShowDeleteModal(false);
     } catch (err) {
       setError("Erreur lors de la suppression du participant");
+    } finally {
+      setLoading(prev => ({ ...prev, deleteParticipant: false }));
     }
   };
 
   const handleAddParticipants = async () => {
+    if (!selectedParticipantIds.length) {
+      setError('Please select at least one participant');
+      return;
+    }
+
+    setLoading(prev => ({ ...prev, addParticipants: true }));
     try {
-      await api.post(`/formations/${id}/add_participants`, selectedParticipantIds);
-      const updatedFormation = await api.get(`/formations/${id}`);
-      setFormation(updatedFormation.data);
+      // Following the exact same pattern as your working example
+      for (const participantId of selectedParticipantIds) {
+        await api.put(`/participants/${participantId}/formations/${id}`);
+      }
+
+      // Update state to match the working pattern
+      const addedParticipants = allParticipants.filter(p => 
+        selectedParticipantIds.includes(p.id)
+      );
+      
+      setFormation(prev => ({
+        ...prev,
+        participants: [...prev.participants, ...addedParticipants]
+      }));
+      
       setShowModalParticipant(false);
       setSelectedParticipantIds([]);
     } catch (error) {
-      setError('Error adding participants');
+      console.error('Error adding participants:', error);
+      setError(error.response?.data?.message || 'Error adding participants');
+    } finally {
+      setLoading(prev => ({ ...prev, addParticipants: false }));
     }
   };
 
@@ -96,7 +129,7 @@ const FormationDetails = () => {
     setShowDeleteModal(true);
   };
 
-  if (loading) return <Spinner animation="border" className="d-block mx-auto mt-5" />;
+  if (loading.formation) return <Spinner animation="border" className="d-block mx-auto mt-5" />;
   if (error) return <Alert variant="danger" className="mt-4">{error}</Alert>;
   if (!formation) return <Alert variant="warning" className="mt-4">Formation non trouvée</Alert>;
 
@@ -188,7 +221,7 @@ const FormationDetails = () => {
       <Card>
         <Card.Header as="h4" className="bg-light">
           Liste des Participants
-          {userRole === "ADMINISTRATEUR" && (
+          {["ADMINISTRATEUR", "UTILISATEUR"].includes(userRole) && (
             <Button 
               variant="success" 
               size="sm" 
@@ -215,7 +248,7 @@ const FormationDetails = () => {
                   <th>Prénom</th>
                   <th>Email</th>
                   <th>Téléphone</th>
-                  {userRole === "ADMINISTRATEUR" && <th>Actions</th>}
+                  {["ADMINISTRATEUR", "UTILISATEUR"].includes(userRole) && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -226,7 +259,7 @@ const FormationDetails = () => {
                     <td>{participant.prenom}</td>
                     <td>{participant.email}</td>
                     <td>{participant.tel}</td>
-                    {userRole === "ADMINISTRATEUR" && (
+                    {["ADMINISTRATEUR", "UTILISATEUR"].includes(userRole) && (
                       <td>
                         <Button
                           variant="danger"
@@ -266,14 +299,49 @@ const FormationDetails = () => {
       {/* Add Participants Modal */}
       <AddParticipantToFormationModal
         show={showModalParticipant}
-        onHide={() => setShowModalParticipant(false)}
+        onHide={() => {
+          setShowModalParticipant(false);
+          setSelectedParticipantIds([]);
+        }}
         formation={formation}
         participants={allParticipants}
-        loading={participantLoading}
+        loading={loading.addParticipants || loading.participants}
         selectedIds={selectedParticipantIds}
         onToggle={toggleParticipantSelection}
         onConfirm={handleAddParticipants}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmer la suppression</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Êtes-vous sûr de vouloir supprimer {participantToDelete?.nom} {participantToDelete?.prenom} de cette formation ?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowDeleteModal(false)}
+            disabled={loading.deleteParticipant}
+          >
+            Annuler
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleDeleteParticipant}
+            disabled={loading.deleteParticipant}
+          >
+            {loading.deleteParticipant ? (
+              <>
+                <Spinner as="span" size="sm" animation="border" /> Suppression...
+              </>
+            ) : (
+              'Confirmer'
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };

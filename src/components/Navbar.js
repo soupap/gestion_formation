@@ -39,7 +39,7 @@ const CustomNavbar = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/login');
+    navigate('/');
   };
 
   const getRoleVariant = (role) => {
@@ -64,40 +64,48 @@ const CustomNavbar = () => {
         <Navbar.Toggle aria-controls="main-navbar" />
 
         <Navbar.Collapse id="main-navbar">
-          <Nav className="me-auto">
-            {userInfo?.role !== 'UTILISATEUR' && (
-              <Nav.Link as={Link} to="/dashboard" className="d-flex align-items-center">
-                <FaTachometerAlt className="me-1" />
-                Dashboard
-              </Nav.Link>
-            )}
-            <Nav.Link as={Link} to="/formations" className="d-flex align-items-center">
-              <FaBook className="me-1" />
-              Formations
-            </Nav.Link>
-            <Nav.Link as={Link} to="/formateur" className="d-flex align-items-center">
-              <FaChalkboardTeacher className="me-1" />
-              Formateurs
-            </Nav.Link>
-            <Nav.Link as={Link} to="/participants" className="d-flex align-items-center">
-              <FaUsers className="me-1" />
-              Participants
-            </Nav.Link>
-            <Nav.Link as={Link} to="/domaine" className="d-flex align-items-center">
-              <FaBook className="me-1" />
-              Domaines
-            </Nav.Link>
-            <Nav.Link as={Link} to="/employeur" className="d-flex align-items-center">
-              <FaBuilding className="me-1" />
-              Employeurs
-            </Nav.Link>
-            {userInfo?.role === 'ADMINISTRATEUR' && (
-              <Nav.Link as={Link} to="/utilisateur" className="d-flex align-items-center">
-                <FaUserFriends className="me-1" />
-                Utilisateurs
-              </Nav.Link>
-            )}
-          </Nav>
+        <Nav className="me-auto">
+  {userInfo?.role === 'RESPONSABLE' ? (
+    <Nav.Link as={Link} to="/dashboard" className="d-flex align-items-center">
+      <FaTachometerAlt className="me-1" />
+      Dashboard
+    </Nav.Link>
+  ) : (
+    <>
+      <Nav.Link as={Link} to="/formations" className="d-flex align-items-center">
+        <FaBook className="me-1" />
+        Formations
+      </Nav.Link>
+      <Nav.Link as={Link} to="/formateur" className="d-flex align-items-center">
+        <FaChalkboardTeacher className="me-1" />
+        Formateurs
+      </Nav.Link>
+      <Nav.Link as={Link} to="/participants" className="d-flex align-items-center">
+        <FaUsers className="me-1" />
+        Participants
+      </Nav.Link>
+      {userInfo?.role !== 'UTILISATEUR' && (
+        <>
+          <Nav.Link as={Link} to="/domaine" className="d-flex align-items-center">
+            <FaBook className="me-1" />
+            Domaines
+          </Nav.Link>
+          <Nav.Link as={Link} to="/employeur" className="d-flex align-items-center">
+            <FaBuilding className="me-1" />
+            Employeurs
+          </Nav.Link>
+        </>
+      )}
+      {userInfo?.role === 'ADMINISTRATEUR' && (
+        <Nav.Link as={Link} to="/utilisateur" className="d-flex align-items-center">
+          <FaUserFriends className="me-1" />
+          Utilisateurs
+        </Nav.Link>
+      )}
+    </>
+  )}
+</Nav>
+
 
           {loading ? (
             <Spinner animation="border" size="sm" variant="light" className="ms-auto" />

@@ -7,13 +7,18 @@ const Employeur = () => {
   const [employeurs, setEmployeurs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  
-  // New employer fields
+
+  // Modal for add
   const [nomEmployeur, setNomEmployeur] = useState("");
   const [adresse, setAdresse] = useState("");
   const [email, setEmail] = useState("");
   const [telephone, setTelephone] = useState("");
+
+  // Modal for delete
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [employeurToDelete, setEmployeurToDelete] = useState(null);
 
   useEffect(() => {
     fetchEmployeurs();
@@ -38,12 +43,7 @@ const Employeur = () => {
       return;
     }
 
-    const newEmployeur = {
-      nomEmployeur,
-      adresse,
-      email,
-      telephone
-    };
+    const newEmployeur = { nomEmployeur, adresse, email, telephone };
 
     api.post('/employeurs', newEmployeur)
       .then(response => {
@@ -57,6 +57,29 @@ const Employeur = () => {
       });
   };
 
+  const handleDeleteConfirm = () => {
+    if (!employeurToDelete) return;
+
+    api.delete(`/employeurs/${employeurToDelete.id}`)
+      .then(() => {
+        setEmployeurs(employeurs.filter(e => e.id !== employeurToDelete.id));
+        setDeleteError(null);
+      })
+      .catch(error => {
+        const msg = error.response?.data?.message || "Cet employeur ne peut pas être supprimé.";
+        setDeleteError(msg);
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+        setEmployeurToDelete(null);
+      });
+  };
+
+  const openDeleteModal = (employeur) => {
+    setEmployeurToDelete(employeur);
+    setShowDeleteModal(true);
+  };
+
   const resetForm = () => {
     setNomEmployeur("");
     setAdresse("");
@@ -67,7 +90,7 @@ const Employeur = () => {
   return (
     <Container className="mt-4">
       <h1>Liste des employeurs</h1>
-      
+
       {userRole === "ADMINISTRATEUR" && (
         <Button 
           variant="primary" 
@@ -80,6 +103,11 @@ const Employeur = () => {
 
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
+      {deleteError && (
+        <Alert variant="warning" dismissible onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      )}
 
       {!loading && !error && (
         <Table striped bordered hover>
@@ -87,6 +115,7 @@ const Employeur = () => {
             <tr>
               <th>ID</th>
               <th>Nom</th>
+              {userRole === "ADMINISTRATEUR" && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -94,6 +123,17 @@ const Employeur = () => {
               <tr key={employeur.id}>
                 <td>{employeur.id}</td>
                 <td>{employeur.nomEmployeur}</td>
+                {userRole === "ADMINISTRATEUR" && (
+                  <td>
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      onClick={() => openDeleteModal(employeur)}
+                    >
+                      Supprimer
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -131,6 +171,24 @@ const Employeur = () => {
           </Button>
           <Button variant="primary" onClick={handleAddEmployeur}>
             Ajouter
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* ✅ Modal for Delete Confirmation */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmer la suppression</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Êtes-vous sûr de vouloir supprimer l'employeur <strong>{employeurToDelete?.nomEmployeur}</strong> ?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Annuler
+          </Button>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
+            Supprimer
           </Button>
         </Modal.Footer>
       </Modal>

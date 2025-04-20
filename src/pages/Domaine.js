@@ -7,10 +7,15 @@ const Domaines = () => {
   const [domaines, setDomaines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleteError, setDeleteError] = useState(null); // ✅ New error state for delete
 
   // New domaine fields
   const [libelle, setLibelle] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  // Modal for delete confirmation
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [domaineToDelete, setDomaineToDelete] = useState(null);
 
   useEffect(() => {
     fetchDomaines();
@@ -18,7 +23,7 @@ const Domaines = () => {
 
   const fetchDomaines = () => {
     setLoading(true);
-    api.get('/domaines')  // Corrected this line
+    api.get('/domaines')
       .then(response => {
         setDomaines(response.data);
         setLoading(false);
@@ -40,25 +45,60 @@ const Domaines = () => {
     api.post('/domaines', newDomaine)
       .then(() => {
         setShowModal(false);
-        setLibelle(""); // Clear the input field
+        setLibelle("");
         setError(null);
-        fetchDomaines(); // Refresh the list after adding
+        fetchDomaines(); // Refresh
       })
       .catch(() => {
         setError("Erreur lors de l'ajout du domaine.");
       });
   };
 
+  // ✅ Handle delete
+  const handleDeleteDomaine = () => {
+    if (!domaineToDelete) return;
+
+    api.delete(`/domaines/${domaineToDelete.id}`)
+      .then(() => {
+        setDomaines(domaines.filter(d => d.id !== domaineToDelete.id));
+        setDeleteError(null);
+      })
+      .catch(error => {
+        const msg = error.response?.data?.message || "Ce domaine ne peut pas être supprimé.";
+        setDeleteError(msg);
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+        setDomaineToDelete(null);
+      });
+  };
+
+  const openDeleteModal = (domaine) => {
+    setDomaineToDelete(domaine);
+    setShowDeleteModal(true);
+  };
+
   return (
     <Container className="mt-4">
       <h1>Liste des Domaines</h1>
+
       {userRole === "ADMINISTRATEUR" && (
-      <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
-        Ajouter un Domaine
-      </Button>
+        <Button 
+          variant="primary" 
+          className="mb-3" 
+          onClick={() => setShowModal(true)}
+        >
+          Ajouter un Domaine
+        </Button>
       )}
+
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
+      {deleteError && (
+        <Alert variant="warning" dismissible onClose={() => setDeleteError(null)}>
+          {deleteError}
+        </Alert>
+      )}
 
       {!loading && !error && (
         <Table striped bordered hover>
@@ -66,6 +106,7 @@ const Domaines = () => {
             <tr>
               <th>ID</th>
               <th>Libellé</th>
+              {userRole === "ADMINISTRATEUR" && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -73,6 +114,17 @@ const Domaines = () => {
               <tr key={domaine.id}>
                 <td>{domaine.id}</td>
                 <td>{domaine.libelle || "Aucun libellé"}</td>
+                {userRole === "ADMINISTRATEUR" && (
+                  <td>
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      onClick={() => openDeleteModal(domaine)}
+                    >
+                      Supprimer
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -100,6 +152,24 @@ const Domaines = () => {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>Annuler</Button>
           <Button variant="primary" onClick={handleAddDomaine}>Ajouter</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal for Delete Confirmation */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmer la suppression</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Êtes-vous sûr de vouloir supprimer le domaine <strong>{domaineToDelete?.libelle}</strong> ?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Annuler
+          </Button>
+          <Button variant="danger" onClick={handleDeleteDomaine}>
+            Supprimer
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>

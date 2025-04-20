@@ -105,6 +105,7 @@ const AddFormation = ({ onFormationAdded, onClose }) => {
                             <Form.Label>Duration (days)</Form.Label>
                             <Form.Control
                                 type="number"
+                                min={0}
                                 value={formData.duree}
                                 onChange={(e) => setFormData({ ...formData, duree: e.target.value })}
                                 required
@@ -117,6 +118,7 @@ const AddFormation = ({ onFormationAdded, onClose }) => {
                     <Form.Control
                         type="number"
                         value={formData.budget}
+                        min={0}
                         onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
                         required
                     />

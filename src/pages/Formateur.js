@@ -10,8 +10,10 @@ const Formateurs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [deleteModalShow, setDeleteModalShow] = useState(false); // State for delete confirmation modal
+  const [deleteError, setDeleteError] = useState(null);
+  const [formateurToDelete, setFormateurToDelete] = useState(null); // Track the formateur to delete
 
-  // New formateur fields
   const [nom, setNom] = useState("");
   const [prenom, setPrenom] = useState("");
   const [email, setEmail] = useState("");
@@ -30,7 +32,8 @@ const Formateurs = () => {
         setFormateurs(response.data);
         setLoading(false);
       })
-      .catch(() => {
+      .catch(err => {
+        console.error(err);
         setError("Erreur lors du chargement des formateurs.");
         setLoading(false);
       });
@@ -41,8 +44,29 @@ const Formateurs = () => {
       .then(response => {
         setEmployeurs(response.data);
       })
-      .catch(() => {
+      .catch(err => {
+        console.error(err);
         setError("Erreur lors du chargement des employeurs.");
+      });
+  };
+
+  const handleDeleteFormateur = (id) => {
+    setFormateurToDelete(id);
+    setDeleteModalShow(true); // Show the confirmation modal
+  };
+
+  const confirmDeleteFormateur = () => {
+    api.delete(`/formateurs/${formateurToDelete}`)
+      .then(() => {
+        setFormateurs(formateurs.filter(f => f.id !== formateurToDelete));
+        setDeleteError(null); // Clear any previous errors
+        setDeleteModalShow(false); // Close the modal
+        setFormateurToDelete(null); // Reset the formateur to delete
+      })
+      .catch(error => {
+        const msg = error.response?.data?.message || "Erreur lors de la suppression du formateur.";
+        setDeleteError(msg);
+        setDeleteModalShow(false); // Close the modal on error
       });
   };
 
@@ -58,17 +82,18 @@ const Formateurs = () => {
       email,
       tel,
       type,
-      employeur: employeurId ? { id: employeurId } : null
+      employeur: employeurId ? { id: Number(employeurId) } : null
     };
 
     api.post('/formateurs', newFormateur)
       .then(response => {
-        setFormateurs([...formateurs, response.data]);
         setShowModal(false);
         resetForm();
         setError(null);
+        fetchFormateurs(); // re-fetch to include new formateur
       })
-      .catch(() => {
+      .catch(err => {
+        console.error(err);
         setError("Erreur lors de l'ajout du formateur.");
       });
   };
@@ -85,7 +110,13 @@ const Formateurs = () => {
   return (
     <Container className="mt-4">
       <h1>Liste des Formateurs</h1>
-      {userRole === "ADMINISTRATEUR" && (
+      {deleteError && (
+        <Alert variant="warning" onClose={() => setDeleteError(null)} dismissible>
+          {deleteError}
+        </Alert>
+      )}
+
+      
         <Button 
           variant="primary" 
           className="mb-3" 
@@ -93,7 +124,7 @@ const Formateurs = () => {
         >
           Ajouter un Formateur
         </Button>
-      )}
+      
 
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
@@ -109,6 +140,8 @@ const Formateurs = () => {
               <th>Téléphone</th>
               <th>Employeur</th>
               <th>Type</th>
+              {(userRole === "ADMINISTRATEUR" || userRole === "UTILISATEUR") && <th>Actions</th>}
+
             </tr>
           </thead>
           <tbody>
@@ -121,6 +154,18 @@ const Formateurs = () => {
                 <td>{formateur.tel}</td>
                 <td>{formateur.employeur?.nomEmployeur || "Aucun employeur"}</td>
                 <td>{formateur.type}</td>
+                {(userRole === "ADMINISTRATEUR" || userRole === "UTILISATEUR") && (
+  <td>
+    <Button 
+      variant="danger" 
+      size="sm" 
+      onClick={() => handleDeleteFormateur(formateur.id)}
+    >
+      Supprimer
+    </Button>
+  </td>
+)}
+
               </tr>
             ))}
           </tbody>
@@ -128,15 +173,24 @@ const Formateurs = () => {
       )}
 
       {/* Modal for Adding Formateur */}
-      <Modal show={showModal} onHide={() => {
-        setShowModal(false);
-        resetForm();
-      }}>
+      <Modal 
+        show={showModal} 
+        onHide={() => {
+          setShowModal(false);
+          resetForm();
+        }}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Ajouter un Formateur</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <Form>
+        <Form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAddFormateur();
+          }}
+          required
+        >
+          <Modal.Body>
             <Form.Group className="mb-3">
               <Form.Label>Nom</Form.Label>
               <Form.Control 
@@ -206,17 +260,41 @@ const Formateurs = () => {
                 ))}
               </Form.Select>
             </Form.Group>
-          </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button 
+              variant="secondary" 
+              onClick={() => {
+                setShowModal(false);
+                resetForm();
+              }}
+            >
+              Annuler
+            </Button>
+            <Button variant="primary" type="submit">
+              Ajouter
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      {/* Modal for Deletion Confirmation */}
+      <Modal
+        show={deleteModalShow}
+        onHide={() => setDeleteModalShow(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmer la suppression</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Êtes-vous sûr de vouloir supprimer ce formateur ?
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => {
-            setShowModal(false);
-            resetForm();
-          }}>
+          <Button variant="secondary" onClick={() => setDeleteModalShow(false)}>
             Annuler
           </Button>
-          <Button variant="primary" onClick={handleAddFormateur}>
-            Ajouter
+          <Button variant="danger" onClick={confirmDeleteFormateur}>
+            Supprimer
           </Button>
         </Modal.Footer>
       </Modal>

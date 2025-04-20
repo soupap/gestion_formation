@@ -2,99 +2,129 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from '../constants';
+import { Container, Form, Button, Card, Alert } from "react-bootstrap";
+import { FaUser, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Login = () => {
-    const navigate = useNavigate();
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);  // State for password visibility
 
-    // Check for existing valid token on component mount
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        const role = localStorage.getItem("role");
-        if (token) {
-            if(role === "UTILISATEUR") {
-                navigate("/formations"); // Redirect to formations page for formateur
-            }else{
-                navigate("/dashboard"); // Redirect to dashboard for admin
-            }
-        }
-    }, [navigate]);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token) {
+      if (role === "UTILISATEUR") {
+        navigate("/formations");
+      } else {
+        navigate("/dashboard");
+      }
+    }
+  }, [navigate]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError("");  // Reset error message on submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
 
-        try {
-            const response = await axios.post(API_URL + "/api/v1/auth/login", {
-                username,
-                password
-            });
+    try {
+      const response = await axios.post(API_URL + "/api/v1/auth/login", {
+        username,
+        password,
+      });
 
-            console.log("Login Successful", response.data);
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("role", response.data.role);
 
-            // Store token and redirect
-            localStorage.setItem("token", response.data.token);
-            localStorage.setItem("role", response.data.role);
-            if(response.data.role === "UTILISATEUR") {
-                navigate("/formations"); // Redirect to formations page for formateur
-            }else{
-                navigate("/dashboard"); // Redirect to dashboard for admin
-            }
-        } catch (error) {
-            console.error("Login error", error);
-            setError(error.response?.data?.message || "Login failed. Please check your credentials.");
-        }
-    };
+      if (response.data.role === "UTILISATEUR") {
+        navigate("/formations");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Login error", error);
+      setError(error.response?.data?.message || "Échec de la connexion.");
+    }
+  };
 
-    const handleRegisterRedirect = () => {
-        navigate("/register");  // Redirect to the Register page
-    };
+  const handleRegisterRedirect = () => {
+    navigate("/register");
+  };
 
-    return (
-        <div className="container d-flex justify-content-center align-items-center vh-100">
-            <div className="card p-4 shadow-sm" style={{ width: "350px" }}>
-                <h3 className="text-center mb-3">Login</h3>
-                {error && <div className="alert alert-danger">{error}</div>}
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label className="form-label">Username</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            required
-                            autoFocus
-                            onFocus={() => setError("")}
-                        />
-                    </div>
-                    <div className="mb-3">
-                        <label className="form-label">Password</label>
-                        <input
-                            type="password"
-                            className="form-control"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            onFocus={() => setError("")}
-                        />
-                    </div>
-                    <button type="submit" className="btn btn-primary w-100 mb-2">
-                        Login
-                    </button>
-                    <button 
-                        type="button" 
-                        className="btn btn-link w-100 text-decoration-none" 
-                        onClick={handleRegisterRedirect}
-                    >
-                        Register
-                    </button>
-                </form>
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setPasswordVisible(!passwordVisible);
+  };
+
+  return (
+    <Container className="d-flex justify-content-center align-items-center min-vh-100">
+      <Card className="shadow-lg p-4" style={{ width: "100%", maxWidth: "400px" }}>
+        <h2 className="text-center text-primary mb-4">Connexion</h2>
+
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>
+              <FaUser className="me-2" />
+              Nom d'utilisateur
+            </Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="Entrez votre nom d'utilisateur"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoFocus
+              onFocus={() => setError("")}
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-4">
+            <Form.Label>
+              <FaLock className="me-2" />
+              Mot de passe
+            </Form.Label>
+            <div className="position-relative">
+              <Form.Control
+                type={passwordVisible ? "text" : "password"}  // Toggle the type based on visibility state
+                placeholder="Entrez votre mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                onFocus={() => setError("")}
+              />
+              <Button
+                variant="link"
+                onClick={togglePasswordVisibility}
+                className="position-absolute end-0 top-50 translate-middle-y"
+                style={{ fontSize: "1.25rem" }}
+              >
+                {passwordVisible ? <FaEyeSlash /> : <FaEye />}
+              </Button>
             </div>
-        </div>
-    );
+          </Form.Group>
+
+          <div className="d-grid mb-2">
+            <Button type="submit" variant="primary" size="lg">
+              Se connecter
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <Button
+              variant="link"
+              className="text-decoration-none"
+              onClick={handleRegisterRedirect}
+            >
+              Pas de compte ? S'inscrire
+            </Button>
+          </div>
+        </Form>
+      </Card>
+    </Container>
+  );
 };
 
 export default Login;

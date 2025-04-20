@@ -32,7 +32,7 @@ const AddParticipant = ({ onParticipantAdded }) => {
       email,
       tel,
       structure,
-      profil: { id: profilId }, // Assuming you have the profile ID available
+      profil: { id: profilId }, 
     };
 
     try {

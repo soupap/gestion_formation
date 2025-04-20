@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Alert, Modal, Spinner, Form } from 'react-bootstrap';
+import {
+  Container, Row, Col, Card, Button, Alert,
+  Modal, Spinner, Form
+} from 'react-bootstrap';
 import { api } from '../services/api';
 import AddParticipant from './AddParticipant';
 import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTimes } from 'react-icons/fa';
@@ -59,7 +62,6 @@ const ParticipantsList = () => {
     try {
       await api.put(`/participants/${selectedParticipant.id}/formations/${selectedFormationId}`);
 
-      // Update the participant's formations in the local state
       setParticipants(prev =>
         prev.map(p =>
           p.id === selectedParticipant.id
@@ -104,7 +106,12 @@ const ParticipantsList = () => {
 
   return (
     <Container className="mt-4">
-      <h1 className="mb-4">Liste des Participants</h1>
+      <h1
+        className="mb-4"
+        style={{ fontFamily: 'Segoe UI, sans-serif', fontWeight: '700', color: '#0d6efd' }}
+      >
+        Liste des Participants
+      </h1>
 
       {error && (
         <Alert variant="danger" className="d-flex justify-content-between align-items-center">
@@ -130,57 +137,52 @@ const ParticipantsList = () => {
         <Row>
           {participants.map((participant) => (
             <Col key={participant.id} md={4} className="mb-3">
-              <Card>
+              <Card
+                className="shadow-sm h-100"
+                style={{
+                  borderRadius: '16px',
+                  background: '#fdfdfd',
+                  border: '1px solid #dee2e6',
+                }}
+              >
                 <Card.Body>
-                  <Card.Title>
+                  <Card.Title className="fw-bold mb-3" style={{ fontFamily: 'Segoe UI, sans-serif', fontSize: '1.25rem' }}>
                     {participant.nom} {participant.prenom}
                   </Card.Title>
-                  <Card.Text>
-                    <strong>Email:</strong> {participant.email || 'N/A'}<br />
-                    <strong>Téléphone:</strong> {participant.tel || 'N/A'}<br />
-                    <strong>Structure:</strong> {participant.structure || 'N/A'}<br />
-                    <strong>Formations:</strong> {participant.formations?.length || 0}
+                  <Card.Text style={{ fontFamily: 'Segoe UI, sans-serif', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                    <span style={{ fontWeight: '600' }}>📧 Email:</span> {participant.email || 'N/A'}<br />
+                    <span style={{ fontWeight: '600' }}>📞 Téléphone:</span> {participant.tel || 'N/A'}<br />
+                    <span style={{ fontWeight: '600' }}>🏢 Structure:</span> {participant.structure || 'N/A'}<br />
+                    <span style={{ fontWeight: '600' }}>📚 Formations:</span> {participant.formations?.length || 0}
                   </Card.Text>
-                  <div className="d-flex gap-2 justify-content-end">
+                  <div className="d-flex gap-2 justify-content-end mt-3">
                     <Button
                       variant="success"
                       size="sm"
                       onClick={() => openEnrollModal(participant)}
                       disabled={loading.enroll}
-                      aria-label="Enroll"
-                      data-bs-toggle="tooltip"
-                      data-bs-placement="top"
                       title="Enroll"
                     >
                       <FaUserPlus />
                     </Button>
-
                     <Button
                       variant="info"
                       size="sm"
-                      aria-label="View Details"
-                      data-bs-toggle="tooltip"
-                      data-bs-placement="top"
-                      title="Details"
                       onClick={() => navigate(`/participants/${participant.id}`)}
+                      title="Details"
                     >
                       <FaInfoCircle />
                     </Button>
-
                     <Button
                       variant="danger"
                       size="sm"
                       onClick={() => openDeleteModal(participant)}
                       disabled={loading.delete}
-                      aria-label="Delete"
-                      data-bs-toggle="tooltip"
-                      data-bs-placement="top"
                       title="Delete"
                     >
                       <FaTrashAlt />
                     </Button>
                   </div>
-
                 </Card.Body>
               </Card>
             </Col>
@@ -203,7 +205,7 @@ const ParticipantsList = () => {
         </Modal.Body>
       </Modal>
 
-      {/* Enroll Participant Modal */}
+      {/* Enroll Modal */}
       <Modal show={showEnrollModal} onHide={() => setShowEnrollModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -230,18 +232,10 @@ const ParticipantsList = () => {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowEnrollModal(false)}
-            disabled={loading.enroll}
-          >
+          <Button variant="secondary" onClick={() => setShowEnrollModal(false)} disabled={loading.enroll}>
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleEnroll}
-            disabled={!selectedFormationId || loading.enroll}
-          >
+          <Button variant="primary" onClick={handleEnroll} disabled={!selectedFormationId || loading.enroll}>
             {loading.enroll ? (
               <>
                 <Spinner as="span" size="sm" animation="border" /> Enrolling...
@@ -253,29 +247,20 @@ const ParticipantsList = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Deletion</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           Are you sure you want to delete {selectedParticipant?.nom} {selectedParticipant?.prenom}?
-          <br />
-          This action cannot be undone.
+          <br /> This action cannot be undone.
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setShowDeleteModal(false)}
-            disabled={loading.delete}
-          >
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)} disabled={loading.delete}>
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            onClick={handleDelete}
-            disabled={loading.delete}
-          >
+          <Button variant="danger" onClick={handleDelete} disabled={loading.delete}>
             {loading.delete ? (
               <>
                 <Spinner as="span" size="sm" animation="border" /> Deleting...
@@ -290,7 +275,6 @@ const ParticipantsList = () => {
   );
 };
 
-// Helper function to format dates
 function formatDate(dateString) {
   if (!dateString) return '';
   const options = { year: 'numeric', month: 'short', day: 'numeric' };
