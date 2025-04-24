@@ -4,11 +4,13 @@ import {
   Button, Badge, OverlayTrigger, Tooltip 
 } from 'react-bootstrap';
 import { 
-  FaUserPlus, FaInfoCircle, FaTrashAlt, 
+  FaUserPlus, FaTrashAlt, FaPen, 
   FaPlus, FaCalendar, FaMoneyBillWave 
 } from 'react-icons/fa';
 
 import AddFormation from './AddFormation';
+import EditFormation from './EditFormation';
+
 import AddParticipantToFormationModal from './AddParticipantToFormation';
 
 import { api } from '../services/api';
@@ -25,6 +27,7 @@ const Formations = () => {
   });
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedFormation, setSelectedFormation] = useState(null);
@@ -42,7 +45,7 @@ const Formations = () => {
         setFormations(response.data);
         setLoading(prev => ({ ...prev, formations: false }));
       })
-      .catch(error => {
+      .catch(() => {
         setError('Error loading formations');
         setLoading(prev => ({ ...prev, formations: false }));
       });
@@ -59,7 +62,7 @@ const Formations = () => {
         setAllParticipants(availableParticipants);
         setLoading(prev => ({ ...prev, participants: false }));
       })
-      .catch(error => {
+      .catch(() => {
         setError('Error loading participants');
         setLoading(prev => ({ ...prev, participants: false }));
       });
@@ -126,7 +129,7 @@ const Formations = () => {
         setFormations(prev => prev.filter(f => f.id !== selectedFormation.id));
         setShowDeleteModal(false);
       })
-      .catch(error => {
+      .catch(() => {
         setError('Error deleting formation');
       })
       .finally(() => {
@@ -137,6 +140,7 @@ const Formations = () => {
   const handleFormationAdded = () => {
     fetchFormations();
     setShowModal(false);
+    setShowEditModal(false);
   };
 
   const formatDate = (dateString) => {
@@ -185,7 +189,7 @@ const Formations = () => {
           </thead>
           <tbody>
             {formations.map(formation => (
-              <tr key={formation.id}>
+              <tr key={formation.id} onClick={() => navigate(`/formations/${formation.id}`)}>
                 <td>
                   <strong>{formation.titre}</strong>
                   <div className="text-muted small">{formation.lieu}</div>
@@ -221,7 +225,8 @@ const Formations = () => {
                         variant="info"
                         size="sm"
                         className="p-2"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedFormation(formation);
                           fetchParticipants();
                           setShowAddParticipantModal(true);
@@ -235,18 +240,25 @@ const Formations = () => {
                         )}
                       </Button>
                     </OverlayTrigger>
-
-                    <OverlayTrigger overlay={<Tooltip>Details</Tooltip>}>
+                    <OverlayTrigger overlay={<Tooltip>Edit</Tooltip>}>
                       <Button
                         variant="light"
                         size="sm"
                         className="p-2"
-                        onClick={() => navigate(`/formations/${formation.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedFormation(formation);
+                          setShowEditModal(true);
+                        }}
+                        disabled={loading.participants}
                       >
-                        <FaInfoCircle />
+                        {loading.participants ? (
+                          <Spinner animation="border" size="sm" />
+                        ) : (
+                          <FaPen/>
+                        )}
                       </Button>
                     </OverlayTrigger>
-
                     <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
                       <Button
                         variant="danger"
@@ -327,6 +339,22 @@ const Formations = () => {
           <AddFormation
             onFormationAdded={handleFormationAdded}
             onClose={() => setShowModal(false)}
+          />
+        </Modal.Body>
+      </Modal>
+      {/* Edit Formation Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <FaPlus className="me-2" />
+            edit formation
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <EditFormation
+            formationToEdit={selectedFormation}
+            onFormationUpdated={handleFormationAdded}
+            onClose={() => setShowEditModal(false)}
           />
         </Modal.Body>
       </Modal>

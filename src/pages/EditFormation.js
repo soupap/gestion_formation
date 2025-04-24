@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Form, Button, Alert, Row, Col } from 'react-bootstrap';
 import { api } from '../services/api';
 
-const EditFormation = ({ onFormationAdded, onClose }) => {
+const EditFormation = ({ formationToEdit, onFormationUpdated, onClose }) => {
     const [formData, setFormData] = useState({
         titre: '',
         annee: new Date().getFullYear(),
@@ -19,11 +19,26 @@ const EditFormation = ({ onFormationAdded, onClose }) => {
     const [formateurs, setFormateurs] = useState([]);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         fetchDomaines();
         fetchFormateurs();
-    }, []);
+        if (formationToEdit) {
+            const { titre, annee, duree, budget, lieu, dateDebut, domaine, formateur } = formationToEdit;
+            setFormData({
+                titre,
+                annee,
+                duree,
+                budget,
+                lieu,
+                dateDebut: dateDebut ? new Date(dateDebut).toISOString().split('T')[0] : '',
+                domaine: domaine ? { id: domaine.id } : { id: '' },
+                formateur: formateur ? { id: formateur.id } : { id: '' },
+                participant: formationToEdit.participant || [],
+            });
+        }
+    }, [formationToEdit]);
 
     const fetchDomaines = async () => {
         try {
@@ -42,26 +57,33 @@ const EditFormation = ({ onFormationAdded, onClose }) => {
             setError('Error loading formateurs');
         }
     };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             const payload = {
                 titre: formData.titre,
-                annee: formData.annee,
-                duree: formData.duree,
-                budget: formData.budget,
+                annee: Number(formData.annee),
+                duree: Number(formData.duree),
+                budget: Number(formData.budget),
                 lieu: formData.lieu,
-                dateDebut: new Date(formData.dateDebut).toISOString(),
+                dateDebut: formData.dateDebut ? new Date(formData.dateDebut).toISOString() : null,
                 domaine: { id: formData.domaine.id },
                 formateur: { id: formData.formateur.id },
             };
-            console.log(payload);
-            await api.post('/formations', payload);
-            setSuccess('Formation added successfully!');
-            if (onFormationAdded) onFormationAdded();
+
+            if (formationToEdit?.id) {
+                await api.put(`/formations/${formationToEdit.id}`, payload);
+                setSuccess('Formation updated successfully!');
+                if (onFormationUpdated) onFormationUpdated();
+            }
+
             setTimeout(() => onClose(), 2000);
         } catch (error) {
-            setError('Error adding formation');
+            setError('Error updating formation');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -109,7 +131,8 @@ const EditFormation = ({ onFormationAdded, onClose }) => {
                                 value={formData.duree}
                                 onChange={(e) => setFormData({ ...formData, duree: e.target.value })}
                                 required
-                            /></Col>
+                            />
+                        </Col>
                     </Row>
                 </Form.Group>
 
@@ -123,7 +146,6 @@ const EditFormation = ({ onFormationAdded, onClose }) => {
                         required
                     />
                 </Form.Group>
-
 
                 <Form.Group className="mb-3">
                     <Row>
@@ -154,20 +176,22 @@ const EditFormation = ({ onFormationAdded, onClose }) => {
                             </Form.Select>
                         </Col>
                     </Row>
-                    <Form.Group className="mb-3">
-                        <Form.Label>Location</Form.Label>
-                        <Form.Control
-                            type="text"
-                            value={formData.lieu}
-                            onChange={(e) => setFormData({ ...formData, lieu: e.target.value })}
-                            required
-                        />
-                    </Form.Group>
-
-
                 </Form.Group>
+
+                <Form.Group className="mb-3">
+                    <Form.Label>Location</Form.Label>
+                    <Form.Control
+                        type="text"
+                        value={formData.lieu}
+                        onChange={(e) => setFormData({ ...formData, lieu: e.target.value })}
+                        required
+                    />
+                </Form.Group>
+
                 <Row className="m-3">
-                    <Button variant="primary" type="submit">Save Formation</Button>
+                    <Button variant="primary" type="submit" disabled={loading}>
+                        {loading ? 'Saving...' : 'Update Formation'}
+                    </Button>
                 </Row>
             </Form>
         </Container>
