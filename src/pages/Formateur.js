@@ -116,15 +116,15 @@ const Formateurs = () => {
         </Alert>
       )}
 
-      
-        <Button 
-          variant="primary" 
-          className="mb-3" 
-          onClick={() => setShowModal(true)}
-        >
-          Ajouter un Formateur
-        </Button>
-      
+
+      <Button
+        variant="primary"
+        className="mb-3"
+        onClick={() => setShowModal(true)}
+      >
+        Ajouter un Formateur
+      </Button>
+
 
       {loading && <Spinner animation="border" />}
       {error && <Alert variant="danger">{error}</Alert>}
@@ -155,16 +155,16 @@ const Formateurs = () => {
                 <td>{formateur.employeur?.nomEmployeur || "Aucun employeur"}</td>
                 <td>{formateur.type}</td>
                 {(userRole === "ADMINISTRATEUR" || userRole === "UTILISATEUR") && (
-  <td>
-    <Button 
-      variant="danger" 
-      size="sm" 
-      onClick={() => handleDeleteFormateur(formateur.id)}
-    >
-      Supprimer
-    </Button>
-  </td>
-)}
+                  <td>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDeleteFormateur(formateur.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </td>
+                )}
 
               </tr>
             ))}
@@ -173,8 +173,8 @@ const Formateurs = () => {
       )}
 
       {/* Modal for Adding Formateur */}
-      <Modal 
-        show={showModal} 
+      <Modal
+        show={showModal}
         onHide={() => {
           setShowModal(false);
           resetForm();
@@ -183,7 +183,7 @@ const Formateurs = () => {
         <Modal.Header closeButton>
           <Modal.Title>Ajouter un Formateur</Modal.Title>
         </Modal.Header>
-        <Form 
+        <Form
           onSubmit={(e) => {
             e.preventDefault();
             handleAddFormateur();
@@ -193,77 +193,78 @@ const Formateurs = () => {
           <Modal.Body>
             <Form.Group className="mb-3">
               <Form.Label>Nom</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Nom" 
-                value={nom} 
-                onChange={(e) => setNom(e.target.value)} 
+              <Form.Control
+                type="text"
+                placeholder="Nom"
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
                 required
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Prénom</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Prénom" 
-                value={prenom} 
-                onChange={(e) => setPrenom(e.target.value)} 
+              <Form.Control
+                type="text"
+                placeholder="Prénom"
+                value={prenom}
+                onChange={(e) => setPrenom(e.target.value)}
                 required
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Email</Form.Label>
-              <Form.Control 
-                type="email" 
-                placeholder="Email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
+              <Form.Control
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Téléphone</Form.Label>
-              <Form.Control 
-                type="text" 
-                placeholder="Téléphone" 
-                value={tel} 
-                onChange={(e) => setTel(e.target.value)} 
+              <Form.Control
+                type="text"
+                placeholder="Téléphone"
+                value={tel}
+                onChange={(e) => setTel(e.target.value)}
                 required
               />
             </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Type</Form.Label>
-              <Form.Select 
-                value={type} 
+              <Form.Select
+                value={type}
                 onChange={(e) => setType(e.target.value)}
               >
                 <option value="INTERNE">Interne</option>
                 <option value="EXTERNE">Externe</option>
               </Form.Select>
             </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Employeur</Form.Label>
-              <Form.Select 
-                value={employeurId}
-                onChange={(e) => setEmployeurId(e.target.value)}
-              >
-                <option value="">Sélectionner un employeur</option>
-                {employeurs.map(employeur => (
-                  <option key={employeur.id} value={employeur.id}>
-                    {employeur.nomEmployeur}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+            {(type === "EXTERNE" && (
+              <Form.Group className="mb-3">
+                <Form.Label>Employeur</Form.Label>
+                <Form.Select
+                  value={employeurId}
+                  onChange={(e) => setEmployeurId(e.target.value)}
+                >
+                  <option value="">Sélectionner un employeur</option>
+                  {employeurs.map(employeur => (
+                    <option key={employeur.id} value={employeur.id}>
+                      {employeur.nomEmployeur}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            ))}
           </Modal.Body>
           <Modal.Footer>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => {
                 setShowModal(false);
                 resetForm();

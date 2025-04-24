@@ -32,7 +32,6 @@ function AppRoutes() {
 
   const role = localStorage.getItem('role');
   const isAdmin = role === 'ADMINISTRATEUR';
-  const isUser = role === 'UTILISATEUR';
   const isResponsable = role === 'RESPONSABLE';
 
   return (
@@ -49,7 +48,7 @@ function AppRoutes() {
           {/* Only RESPONSABLE can access dashboard, others redirected to /formations */}
           <Route
             path="/dashboard"
-            element={isResponsable ? <Dashboard /> : <Navigate to="/formations" replace />}
+            element={isResponsable || isAdmin ? <Dashboard /> : <Navigate to="/formations" replace />}
           />
 
           <Route path="/formations" element={<Formations />} />

@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Card, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { api } from '../services/api';
-import { Bar, Line } from 'react-chartjs-2';
+import { Bar, Line, Pie } from 'react-chartjs-2';
 import { Chart, registerables } from 'chart.js';
 import {
   FaTrophy,
   FaMoneyBillWave,
-  FaCalendarAlt,
   FaChalkboardTeacher,
   FaUsers,
   FaChartBar,
-  FaChartPie
+  FaChartPie,
+  FaBook,
+  FaLayerGroup
 } from 'react-icons/fa';
 
 Chart.register(...registerables);
@@ -20,8 +21,12 @@ const Dashboard = () => {
     bestFormations: [],
     totalBudget: 0,
     budgetByYear: {},
-    bestFormateur: null,
-    participantsCount: 0
+    bestFormateurs: [],
+    participantsCount: 0,
+    activeFormations: 0,
+    totalFormations: 0,
+    formationsByDomaine: {},
+    topDomainsByBudget: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,36 +34,56 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStatistics = async () => {
       try {
-        const [bestFormations, totalBudget, budgetByYear, bestFormateur, participants] = await Promise.all([
-          api.get('/statistic/best-formations'),
+        const [
+          bestFormations, 
+          totalBudget, 
+          budgetByYear, 
+          bestFormateurs, 
+          participants,
+          activeFormations,
+          totalFormations,
+          formationsByDomaine,
+          topDomainsByBudget
+        ] = await Promise.all([
+          api.get('/statistic/top-formations'),
           api.get('/statistic/total-budget'),
           api.get('/statistic/budget-by-year'),
-          api.get('/statistic/best-formateur'),
-          api.get('/statistic/total-participants')
+          api.get('/statistic/top-formateurs'),
+          api.get('/statistic/total-participants'),
+          api.get('/statistic/active-formations'),
+          api.get('/statistic/total-formations'),
+          api.get('/statistic/formations-by-domaine'),
+          api.get('/statistic/top-domains-by-budget')
         ]);
 
         setStats({
           bestFormations: bestFormations.data,
           totalBudget: totalBudget.data,
           budgetByYear: budgetByYear.data,
-          bestFormateur: bestFormateur.data,
-          participantsCount: participants.data
+          bestFormateurs: bestFormateurs.data,
+          participantsCount: participants.data,
+          activeFormations: activeFormations.data,
+          totalFormations: totalFormations.data,
+          formationsByDomaine: formationsByDomaine.data,
+          topDomainsByBudget: topDomainsByBudget.data
         });
         setLoading(false);
       } catch (error) {
         setError("Error loading dashboard statistics");
         setLoading(false);
+        console.error(error);
       }
     };
 
     fetchStatistics();
   }, []);
 
+  // Charts data preparation
   const topFormationsChart = {
     labels: stats.bestFormations.map(f => f.titre),
     datasets: [{
       label: 'Participants',
-      data: stats.bestFormations.map(f => f.participants.length),
+      data: stats.bestFormations.map(f => f.participants?.length || 0),
       backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
       borderWidth: 1
     }]
@@ -76,6 +101,31 @@ const Dashboard = () => {
     }]
   };
 
+  const formationsByDomaineChart = {
+    labels: Object.keys(stats.formationsByDomaine),
+    datasets: [{
+      data: Object.values(stats.formationsByDomaine),
+      backgroundColor: [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+        '#9966FF', '#FF9F40', '#8AC24A', '#F06292'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const domainsByBudgetChart = {
+    labels: stats.topDomainsByBudget.map(d => d.domaine),
+    datasets: [{
+      label: 'Budget (TND)',
+      data: stats.topDomainsByBudget.map(d => d.totalBudget),
+      backgroundColor: [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+        '#9966FF', '#FF9F40', '#8AC24A', '#F06292'
+      ],
+      borderWidth: 1
+    }]
+  };
+
   if (loading) {
     return (
       <Container className="my-5 text-center">
@@ -89,11 +139,12 @@ const Dashboard = () => {
     <Container className="py-4">
       <h1 className="mb-4 d-flex align-items-center">
         <FaChartBar className="me-3 text-primary" />
-        Dashboard Overview
+        Training Center Dashboard
       </h1>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
+      {/* Summary Cards */}
       <Row className="mb-4 g-4">
         <Col md={6} lg={3}>
           <Card className="h-100 shadow-sm border-0">
@@ -123,10 +174,10 @@ const Dashboard = () => {
           <Card className="h-100 shadow-sm border-0">
             <Card.Body className="text-center">
               <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3">
-                <FaChalkboardTeacher size={24} className="text-warning" />
+                <FaLayerGroup size={24} className="text-warning" />
               </div>
-              <h3>{stats.bestFormations.length}</h3>
-              <p className="text-muted mb-0">Active Formations</p>
+              <h3>{stats.totalFormations}</h3>
+              <p className="text-muted mb-0">Total Formations</p>
             </Card.Body>
           </Card>
         </Col>
@@ -135,16 +186,17 @@ const Dashboard = () => {
           <Card className="h-100 shadow-sm border-0">
             <Card.Body className="text-center">
               <div className="bg-info bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3">
-                <FaCalendarAlt size={24} className="text-info" />
+                <FaBook size={24} className="text-info" />
               </div>
-              <h3>{Object.keys(stats.budgetByYear).length}</h3>
-              <p className="text-muted mb-0">Years Tracked</p>
+              <h3>{stats.activeFormations}</h3>
+              <p className="text-muted mb-0">Active Formations</p>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      <Row className="g-4">
+      {/* Charts Row 1 */}
+      <Row className="g-4 mb-4">
         <Col lg={6}>
           <Card className="h-100 shadow-sm">
             <Card.Body>
@@ -158,7 +210,16 @@ const Dashboard = () => {
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.parsed.y} participants`;
+                          }
+                        }
+                      }
+                    },
                     scales: { y: { beginAtZero: true } }
                   }}
                 />
@@ -180,7 +241,16 @@ const Dashboard = () => {
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: true, position: 'top' } },
+                    plugins: { 
+                      legend: { display: true, position: 'top' },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.parsed.y.toLocaleString()} TND`;
+                          }
+                        }
+                      }
+                    },
                     scales: { y: { beginAtZero: true } }
                   }}
                 />
@@ -190,36 +260,139 @@ const Dashboard = () => {
         </Col>
       </Row>
 
-      <Row className="mt-4">
-        <Col>
-          <Card className="shadow-sm">
-            <Card.Body>
-              <div className="d-flex align-items-center mb-3">
-                <FaChalkboardTeacher className="text-danger me-2" size={20} />
-                <h5 className="mb-0">Top Performing Formateur</h5>
-              </div>
-              {stats.bestFormateur ? (
-                <div className="d-flex align-items-center">
-                  <div className="bg-light rounded-circle d-flex align-items-center justify-content-center me-4" style={{ width: '80px', height: '80px' }}>
-                    <FaChalkboardTeacher size={32} className="text-muted" />
+{/* Charts Row 2 - Flipped Chart Types */}
+<Row className="g-4 mb-4">
+  <Col lg={6}>
+    <Card className="h-100 shadow-sm">
+      <Card.Body>
+        <div className="d-flex align-items-center mb-3">
+          <FaChartPie className="text-danger me-2" size={20} />
+          <h5 className="mb-0">Formations by Domain</h5>
+        </div>
+        <div style={{ height: '300px' }}>
+          <Bar 
+            data={formationsByDomaineChart}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.label}: ${context.parsed.y} formations`;
+                    }
+                  }
+                }
+              },
+              scales: { 
+                y: { 
+                  beginAtZero: true,
+                  ticks: {
+                    precision: 0 // Show whole numbers only
+                  }
+                } 
+              }
+            }}
+          />
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+
+  <Col lg={6}>
+    <Card className="h-100 shadow-sm">
+      <Card.Body>
+        <div className="d-flex align-items-center mb-3">
+          <FaMoneyBillWave className="text-success me-2" size={20} />
+          <h5 className="mb-0">Top Domains by Budget</h5>
+        </div>
+        <div style={{ height: '300px' }}>
+          <Pie 
+            data={domainsByBudgetChart}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { 
+                legend: { position: 'right' },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.label}: ${context.raw.toLocaleString()} TND`;
+                    }
+                  }
+                }
+              }
+            }}
+          />
+        </div>
+      </Card.Body>
+    </Card>
+  </Col>
+</Row>
+
+{/* Top Formateurs Section */}
+<Row className="mb-4">
+  <Col>
+    <Card className="shadow-sm">
+      <Card.Body>
+        <div className="d-flex align-items-center mb-3">
+          <FaChalkboardTeacher className="text-danger me-2" size={20} />
+          <h5 className="mb-0">Top Performing Formateurs</h5>
+        </div>
+        
+        {stats.bestFormateurs && Object.keys(stats.bestFormateurs).length > 0 ? (
+          <div>
+            {/* Convert the object to array of entries, sort by count, and take top 3 */}
+            {Object.entries(stats.bestFormateurs)
+              .sort(([,a], [,b]) => b - a) // Sort by count descending
+              .slice(0, 3) // Take top 3
+              .map(([formateurStr, count], index) => {
+                // Parse the formateur string to extract details
+                const formateurMatch = formateurStr.match(/Formateur\(id=(\d+), nom=([^,]+), prenom=([^,]+), email=([^,]+)/);
+                if (!formateurMatch) return null;
+                
+                const [, id, nom, prenom, email] = formateurMatch;
+                
+                return (
+                  <div key={id} className="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    <div className="position-relative me-5">
+                      <div className="bg-light rounded-circle d-flex align-items-center justify-content-center" 
+                           style={{ width: '60px', height: '60px' }}>
+                        <FaChalkboardTeacher size={24} className="text-muted" />
+                      </div>
+                      {index === 0 && (
+                        <div className="position-absolute top-0 start-100 translate-middle">
+                          <span className="badge rounded-pill bg-warning text-dark">
+                            <FaTrophy className="me-1" /> #1
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div> 
+                      <h5 className="mb-1">
+                        {index + 1}. {nom} {prenom}
+                      </h5>
+                      <p className="text-muted mb-1 small">Email: {email}</p>
+                      <p className="mb-0">
+                        <span className="badge bg-primary">
+                          {count} formations conducted
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="mb-1">{stats.bestFormateur.nom} {stats.bestFormateur.prenom}</h4>
-                    <p className="text-muted mb-1">Email: {stats.bestFormateur.email}</p>
-                    <p className="mb-0">
-                      <span className="badge bg-primary">
-                        {stats.bestFormateur.formationsCount || 0} formations
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-muted">No formateur data available</p>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                );
+              })
+            }
+          </div>
+        ) : (
+          <p className="text-muted">No formateur data available</p>
+        )}
+      </Card.Body>
+    </Card>
+  </Col>
+</Row>
     </Container>
   );
 };

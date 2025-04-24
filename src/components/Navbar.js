@@ -72,6 +72,12 @@ const CustomNavbar = () => {
     </Nav.Link>
   ) : (
     <>
+    {(userInfo?.role === 'ADMINISTRATEUR' )&&
+    <Nav.Link as={Link} to="/dashboard" className="d-flex align-items-center">
+      <FaTachometerAlt className="me-1" />
+      Dashboard
+    </Nav.Link>
+    }
       <Nav.Link as={Link} to="/formations" className="d-flex align-items-center">
         <FaBook className="me-1" />
         Formations
