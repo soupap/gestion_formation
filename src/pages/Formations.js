@@ -45,8 +45,15 @@ const Formations = () => {
         setFormations(response.data);
         setLoading(prev => ({ ...prev, formations: false }));
       })
-      .catch(() => {
-        setError('Error loading formations');
+      .catch((error) => {
+        const apiError = error.response?.data;
+        if (apiError && (apiError.error || apiError.message)) {
+          setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+        } else if (typeof apiError === 'string') {
+          setError(apiError);
+        } else {
+          setError('Error loading formations');
+        }
         setLoading(prev => ({ ...prev, formations: false }));
       });
   };
@@ -62,8 +69,15 @@ const Formations = () => {
         setAllParticipants(availableParticipants);
         setLoading(prev => ({ ...prev, participants: false }));
       })
-      .catch(() => {
-        setError('Error loading participants');
+      .catch((error) => {
+        const apiError = error.response?.data;
+        if (apiError && (apiError.error || apiError.message)) {
+          setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+        } else if (typeof apiError === 'string') {
+          setError(apiError);
+        } else {
+          setError('Error loading participants');
+        }
         setLoading(prev => ({ ...prev, participants: false }));
       });
   };
@@ -73,40 +87,23 @@ const Formations = () => {
       setError('Please select at least one participant');
       return;
     }
-
     setLoading(prev => ({ ...prev, addParticipants: true }));
-    
     try {
-      // Using for...of loop for sequential API calls as in FormationDetails
       for (const participantId of selectedParticipantIds) {
         await api.put(`/participants/${participantId}/formations/${selectedFormation.id}`);
       }
-
-      // Get the added participants from allParticipants
-      const addedParticipants = allParticipants.filter(p => 
-        selectedParticipantIds.includes(p.id)
-      );
-      
-      // Update the formations state
-      setFormations(prev => 
-        prev.map(f => 
-          f.id === selectedFormation.id
-            ? {
-                ...f,
-                participants: [
-                  ...(f.participants || []),
-                  ...addedParticipants
-                ]
-              }
-            : f
-        )
-      );
-      
       setShowAddParticipantModal(false);
       setSelectedParticipantIds([]);
+      fetchFormations();
     } catch (error) {
-      console.error('Error adding participants:', error);
-      setError(error.response?.data?.message || 'Error adding participants');
+      const apiError = error.response?.data;
+      if (apiError && (apiError.error || apiError.message)) {
+        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+      } else if (typeof apiError === 'string') {
+        setError(apiError);
+      } else {
+        setError('Error adding participants');
+      }
     } finally {
       setLoading(prev => ({ ...prev, addParticipants: false }));
     }

@@ -34,7 +34,12 @@ const Register = () => {
       navigate("/dashboard");
 
     } catch (error) {
-      setError("Erreur lors de l'enregistrement.");
+      const apiError = error.response?.data;
+      if (apiError) {
+        setError(`${apiError.message || ''}`.trim());
+      } else {
+        setError("Erreur lors de l'enregistrement.");
+      }
       setSuccess(null);
     }
   };

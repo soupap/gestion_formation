@@ -43,8 +43,14 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Login error", error);
-      setError(error.response?.data?.message || "Échec de la connexion.");
+      const apiError = error.response?.data;
+      if (apiError && (apiError.error || apiError.message)) {
+        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+      } else if (typeof apiError === 'string') {
+        setError(apiError);
+      } else {
+        setError("Échec de la connexion.");
+      }
     }
   };
 

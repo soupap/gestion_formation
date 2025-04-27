@@ -35,7 +35,14 @@ const ParticipantsList = () => {
         setParticipants(participantsRes.data);
         setFormations(formationsRes.data);
       } catch (error) {
-        setError('Error loading data');
+        const apiError = error.response?.data;
+        if (apiError && (apiError.error || apiError.message)) {
+          setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+        } else if (typeof apiError === 'string') {
+          setError(apiError);
+        } else {
+          setError('Error loading data');
+        }
       } finally {
         setLoading(prev => ({ ...prev, participants: false }));
       }
@@ -78,7 +85,14 @@ const ParticipantsList = () => {
 
       setShowEnrollModal(false);
     } catch (error) {
-      setError('Error enrolling participant');
+      const apiError = error.response?.data;
+      if (apiError && (apiError.error || apiError.message)) {
+        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+      } else if (typeof apiError === 'string') {
+        setError(apiError);
+      } else {
+        setError('Error enrolling participant');
+      }
     } finally {
       setLoading(prev => ({ ...prev, enroll: false }));
     }
@@ -98,7 +112,14 @@ const ParticipantsList = () => {
       setParticipants(prev => prev.filter(p => p.id !== selectedParticipant.id));
       setShowDeleteModal(false);
     } catch (error) {
-      setError('Error deleting participant');
+      const apiError = error.response?.data;
+      if (apiError && (apiError.error || apiError.message)) {
+        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+      } else if (typeof apiError === 'string') {
+        setError(apiError);
+      } else {
+        setError('Error deleting participant');
+      }
     } finally {
       setLoading(prev => ({ ...prev, delete: false }));
     }

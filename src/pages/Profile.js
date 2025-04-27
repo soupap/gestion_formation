@@ -84,7 +84,15 @@ const Profile = () => {
       setSuccessMessage('Profile updated successfully');
       setShowEditModal(false);
     } catch (err) {
-      setError(err.response?.data || 'Failed to update profile');
+      // Custom error handling for Unauthorized/Invalid credentials
+      const apiError = err.response?.data;
+      if (apiError && apiError.error === "Unauthorized" && apiError.message?.includes("Invalid credentials")) {
+        setError('Unauthorized: Invalid credentials: Invalid username or password');
+      } else if (typeof apiError === 'string' && apiError.includes('Invalid credentials')) {
+        setError('Unauthorized: Invalid credentials: Invalid username or password');
+      } else {
+        setError(apiError?.message || apiError || 'Failed to update profile');
+      }
     } finally {
       setIsSaving(false);
     }
