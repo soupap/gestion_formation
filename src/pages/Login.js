@@ -45,7 +45,7 @@ const Login = () => {
     } catch (error) {
       const apiError = error.response?.data;
       if (apiError && (apiError.error || apiError.message)) {
-        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+        setError(apiError.message);
       } else if (typeof apiError === 'string') {
         setError(apiError);
       } else {
@@ -115,16 +115,6 @@ const Login = () => {
           <div className="d-grid mb-2">
             <Button type="submit" variant="primary" size="lg">
               Se connecter
-            </Button>
-          </div>
-
-          <div className="text-center">
-            <Button
-              variant="link"
-              className="text-decoration-none"
-              onClick={handleRegisterRedirect}
-            >
-              Pas de compte ? S'inscrire
             </Button>
           </div>
         </Form>

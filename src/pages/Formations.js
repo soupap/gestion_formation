@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, Table, Alert, Spinner, Modal, 
-  Button, Badge, OverlayTrigger, Tooltip 
+import {
+  Container, Table, Alert, Spinner, Modal,
+  Button, Badge, OverlayTrigger, Tooltip
 } from 'react-bootstrap';
-import { 
-  FaUserPlus, FaTrashAlt, FaPen, 
-  FaPlus, FaCalendar, FaMoneyBillWave 
+import {
+  FaUserPlus, FaTrashAlt, FaPen,
+  FaPlus, FaCalendar, FaMoneyBillWave
 } from 'react-icons/fa';
 
 import AddFormation from './AddFormation';
@@ -48,7 +48,7 @@ const Formations = () => {
       .catch((error) => {
         const apiError = error.response?.data;
         if (apiError && (apiError.error || apiError.message)) {
-          setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+          setError(apiError.message);
         } else if (typeof apiError === 'string') {
           setError(apiError);
         } else {
@@ -72,7 +72,7 @@ const Formations = () => {
       .catch((error) => {
         const apiError = error.response?.data;
         if (apiError && (apiError.error || apiError.message)) {
-          setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+          setError(apiError.message);
         } else if (typeof apiError === 'string') {
           setError(apiError);
         } else {
@@ -98,7 +98,7 @@ const Formations = () => {
     } catch (error) {
       const apiError = error.response?.data;
       if (apiError && (apiError.error || apiError.message)) {
-        setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
+        setError(apiError.message);
       } else if (typeof apiError === 'string') {
         setError(apiError);
       } else {
@@ -171,7 +171,7 @@ const Formations = () => {
           </Button>
         </Alert>
       ) : (
-        <Table striped bordered hover responsive>
+        <Table bordered hover responsive>
           <thead className="table-dark">
             <tr>
               <th>Titre</th>
@@ -186,7 +186,14 @@ const Formations = () => {
           </thead>
           <tbody>
             {formations.map(formation => (
-              <tr key={formation.id} onClick={() => navigate(`/formations/${formation.id}`)}>
+              <tr className="shadow-sm h-100"
+                style={{
+                  borderRadius: '16px',
+                  
+                  border: '1px solid #dee2e6',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                }} key={formation.id} onClick={() => navigate(`/formations/${formation.id}`)}>
                 <td>
                   <strong>{formation.titre}</strong>
                   <div className="text-muted small">{formation.lieu}</div>
@@ -252,7 +259,7 @@ const Formations = () => {
                         {loading.participants ? (
                           <Spinner animation="border" size="sm" />
                         ) : (
-                          <FaPen/>
+                          <FaPen />
                         )}
                       </Button>
                     </OverlayTrigger>
@@ -301,15 +308,15 @@ const Formations = () => {
           Are you sure you want to delete "{selectedFormation?.titre}"?
         </Modal.Body>
         <Modal.Footer>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => setShowDeleteModal(false)}
             disabled={loading.delete}
           >
             Cancel
           </Button>
-          <Button 
-            variant="danger" 
+          <Button
+            variant="danger"
             onClick={handleDeleteFormation}
             disabled={loading.delete}
           >

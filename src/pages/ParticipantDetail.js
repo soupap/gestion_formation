@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Card, Button, Alert, Spinner, Row, Col, Table, Badge, Modal } from 'react-bootstrap';
-import {  FaTrashAlt, FaArrowLeft, FaUserGraduate, FaEnvelope, FaPhone, FaBuilding } from 'react-icons/fa';
+import { FaTrashAlt, FaArrowLeft, FaUserGraduate, FaEnvelope} from 'react-icons/fa';
 import { api } from '../services/api';
 
 const ParticipantDetail = () => {
@@ -27,7 +27,6 @@ const ParticipantDetail = () => {
 
     fetchParticipant();
   }, [id]);
-
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -82,83 +81,104 @@ const ParticipantDetail = () => {
   }
 
   return (
-    <Container className="mt-4">
-      <Button variant="outline-secondary" className="mb-3" onClick={() => navigate('/participants')}>
-        <FaArrowLeft className="me-2" />
-        Back to Participants
-      </Button>
+    <Container className="mt-4 fade-in">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <Button 
+          variant="link" 
+          className="text-secondary p-0" 
+          onClick={() => navigate('/participants')}
+        >
+          <FaArrowLeft className="me-2" />
+          Back to Participants
+        </Button>
+        <Button variant="outline-danger" size="sm" onClick={() => setShowDeleteModal(true)}>
+          <FaTrashAlt className="me-2" />
+          Delete Participant
+        </Button>
+      </div>
 
-      <Card className="mb-4">
-        <Card.Header className="d-flex justify-content-between align-items-center bg-light">
-          <h3 className="mb-0">
-            {participant.nom} {participant.prenom}
-          </h3>
-          <div>
-            <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
-              <FaTrashAlt className="me-1" />
-              Delete
-            </Button>
+      <Card className="mb-4 participant-card">
+        <Card.Header className="bg-primary  py-3">
+          <div className="d-flex justify-content-between align-items-center">
+            <h3 className="mb-0 text-white">
+              {participant?.nom} {participant?.prenom}
+            </h3>
+        
           </div>
         </Card.Header>
-        <Card.Body>
+        <Card.Body className="p-4">
           <Row>
             <Col md={6}>
-              <div className="mb-3">
-                <h5 className="text-muted">Personal Information</h5>
-                <hr className="mt-1" />
-                <p>
-                  <FaUserGraduate className="me-2 text-primary" />
-                  <strong>Profile:</strong> {participant.profil?.libelle || 'N/A'}
-                </p>
-                <p>
-                  <FaBuilding className="me-2 text-primary" />
-                  <strong>Structure:</strong> {participant.structure || 'N/A'}
-                </p>
+              <div className="info-section">
+                <h5 className="text-primary mb-3">
+                  <FaUserGraduate className="me-2" />
+                  Professional Information
+                </h5>
+                <div className="ps-4">
+                  <p className="mb-3">
+                    <strong>Profile:</strong>
+                    <span className="ms-2">{participant?.profil?.libelle || 'N/A'}</span>
+                  </p>
+                  <p className="mb-3">
+                    <strong>Structure:</strong>
+                    <span className="ms-2">{participant?.structure || 'N/A'}</span>
+                  </p>
+                </div>
               </div>
             </Col>
             <Col md={6}>
-              <div className="mb-3">
-                <h5 className="text-muted">Contact Information</h5>
-                <hr className="mt-1" />
-                <p>
-                  <FaEnvelope className="me-2 text-primary" />
-                  <strong>Email:</strong> {participant.email || 'N/A'}
-                </p>
-                <p>
-                  <FaPhone className="me-2 text-primary" />
-                  <strong>Phone:</strong> {participant.tel || 'N/A'}
-                </p>
+              <div className="info-section">
+                <h5 className="text-primary mb-3">
+                  <FaEnvelope className="me-2" />
+                  Contact Details
+                </h5>
+                <div className="ps-4">
+                  <p className="mb-3">
+                    <strong>Email:</strong>
+                    <span className="ms-2">{participant?.email || 'N/A'}</span>
+                  </p>
+                  <p className="mb-3">
+                    <strong>Phone:</strong>
+                    <span className="ms-2">{participant?.tel || 'N/A'}</span>
+                  </p>
+                </div>
               </div>
             </Col>
           </Row>
         </Card.Body>
       </Card>
 
-      <Card>
-        <Card.Header className="bg-light">
-          <h5 className="mb-0">Enrolled Formations</h5>
+      <Card className="formations-card">
+        <Card.Header className="bg-light py-3">
+          <h5 className="mb-0 text-primary">
+            <FaUserGraduate className="me-2" />
+            Enrolled Formations
+          </h5>
         </Card.Header>
-        <Card.Body>
-          {participant.formations && participant.formations.length > 0 ? (
-            <Table striped bordered hover responsive>
+        <Card.Body className="p-0">
+          {participant?.formations && participant.formations.length > 0 ? (
+            <Table hover responsive className="mb-0">
               <thead>
                 <tr>
-                  <th>Title</th>
+                  <th className="px-4">Title</th>
                   <th>Domain</th>
                   <th>Start Date</th>
                   <th>Duration</th>
-                  <th>Status</th>
+                  <th className="text-center">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {participant.formations.map((formation) => (
                   <tr key={formation.id}>
-                    <td>{formation.titre}</td>
-                    <td>{formation.domaine?.libelle || 'N/A'}</td>
-                    <td>{formatDate(formation.dateDebut)}</td>
-                    <td>{formation.duree} days</td>
-                    <td>
-                      <Badge bg={new Date(formation.dateFin) > new Date() ? 'success' : 'secondary'}>
+                    <td className="px-4 py-3">{formation.titre}</td>
+                    <td className="py-3">{formation.domaine?.libelle || 'N/A'}</td>
+                    <td className="py-3">{formatDate(formation.dateDebut)}</td>
+                    <td className="py-3">{formation.duree} days</td>
+                    <td className="text-center py-3">
+                      <Badge 
+                        bg={new Date(formation.dateFin) > new Date() ? 'success' : 'secondary'}
+                        className="px-3 py-2"
+                      >
                         {new Date(formation.dateFin) > new Date() ? 'Active' : 'Completed'}
                       </Badge>
                     </td>
@@ -167,28 +187,38 @@ const ParticipantDetail = () => {
               </tbody>
             </Table>
           ) : (
-            <Alert variant="info">This participant is not enrolled in any formations yet.</Alert>
+            <Alert variant="info" className="m-3">
+              This participant is not enrolled in any formations yet.
+            </Alert>
           )}
         </Card.Body>
       </Card>
+
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
+      <Modal 
+        show={showDeleteModal} 
+        onHide={() => setShowDeleteModal(false)}
+        centered
+      >
+        <Modal.Header closeButton className="border-bottom-0">
+          <Modal.Title className="text-danger">Confirm Deletion</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete {participant.nom} {participant.prenom}?
-          <br />
-          This action cannot be undone.
+        <Modal.Body className="py-4">
+          <p className="mb-0">
+            Are you sure you want to delete {participant?.nom} {participant?.prenom}?
+            <br />
+            <small className="text-muted">This action cannot be undone.</small>
+          </p>
         </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+        <Modal.Footer className="border-top-0">
+          <Button variant="light" onClick={() => setShowDeleteModal(false)}>
             Cancel
           </Button>
           <Button variant="danger" onClick={handleDelete} disabled={deleting}>
             {deleting ? (
               <>
-                <Spinner as="span" size="sm" animation="border" /> Deleting...
+                <Spinner as="span" size="sm" animation="border" className="me-2" />
+                Deleting...
               </>
             ) : (
               'Delete Participant'

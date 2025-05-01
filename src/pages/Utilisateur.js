@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Container, Table, Alert, Spinner,
   ButtonGroup, Button, Toast, ToastContainer,
-  Modal
+  Modal, Form
 } from 'react-bootstrap';
 import { api } from '../services/api';
 
@@ -15,6 +15,14 @@ const Utilisateurs = () => {
   const [toastType, setToastType] = useState('success');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  // Add new state variables for user creation
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    username: "",
+    password: "",
+    role: "UTILISATEUR"
+  });
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchUtilisateurs();
@@ -28,7 +36,6 @@ const Utilisateurs = () => {
         setLoading(false);
       })
       .catch((err) => {
-        // Show API error message if it exists, else static error
         const apiError = err.response?.data;
         if (apiError && (apiError.error || apiError.message)) {
           setError(`${apiError.error ? apiError.error + ': ' : ''}${apiError.message || ''}`.trim());
@@ -56,7 +63,6 @@ const Utilisateurs = () => {
         throw new Error(response.data?.message || "Réponse inattendue du serveur");
       }
     } catch (err) {
-      // Show API error message if it exists, else static error
       const apiError = err.response?.data;
       if (apiError && (apiError.error || apiError.message)) {
         setToastType('danger');
@@ -85,7 +91,6 @@ const Utilisateurs = () => {
       setToastMessage(`Utilisateur ${userToDelete.username} supprimé avec succès`);
       setShowToast(true);
     } catch (err) {
-      // Show API error message if it exists, else static error
       const apiError = err.response?.data;
       if (apiError && (apiError.error || apiError.message)) {
         setToastType('danger');
@@ -104,6 +109,30 @@ const Utilisateurs = () => {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!newUser.username.trim() || !newUser.password.trim()) {
+      setToastType('danger');
+      setToastMessage("Le nom d'utilisateur et le mot de passe sont obligatoires.");
+      setShowToast(true);
+      return;
+    }
+
+    try {
+      const response = await api.post('/api/v1/auth/register', newUser);
+      setUtilisateurs([...utilisateurs, response.data]);
+      setToastType('success');
+      setToastMessage("Utilisateur créé avec succès!");
+      setShowToast(true);
+      setShowAddModal(false);
+      setNewUser({ username: "", password: "", role: "UTILISATEUR" });
+    } catch (error) {
+      const apiError = error.response?.data;
+      setToastType('danger');
+      setToastMessage(apiError?.message || "Erreur lors de la création de l'utilisateur");
+      setShowToast(true);
+    }
+  };
+
   const getRoleVariant = (role) => {
     const variants = {
       ADMINISTRATEUR: 'danger',
@@ -112,10 +141,15 @@ const Utilisateurs = () => {
     };
     return variants[role] || 'secondary';
   };
-  
+
   return (
     <Container className="mt-4">
-      <h1 className="mb-4">Liste des Utilisateurs</h1>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Liste des Utilisateurs</h1>
+        <Button variant="primary" onClick={() => setShowAddModal(true)}>
+          Ajouter un utilisateur
+        </Button>
+      </div>
 
       {/* Loading spinner */}
       {loading && <Spinner animation="border" className="d-block mx-auto" />}
@@ -137,10 +171,10 @@ const Utilisateurs = () => {
           }}
           delay={3000}
           autohide
-          bg={toastType ? "danger" : "success"}
+          bg={toastType === 'danger' ? 'danger' : 'success'}
         >
           <Toast.Header>
-            <strong className="me-auto">{toastType ? "Erreur" : "Succès"}</strong>
+            <strong className="me-auto">{toastType === 'danger' ? "Erreur" : "Succès"}</strong>
           </Toast.Header>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
@@ -208,6 +242,60 @@ const Utilisateurs = () => {
           </Button>
           <Button variant="danger" onClick={confirmDelete}>
             Supprimer
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Add user modal */}
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ajouter un utilisateur</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3" controlId="formUsername">
+              <Form.Label>Nom d'utilisateur</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Entrez le nom d'utilisateur"
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formPassword">
+              <Form.Label>Mot de passe</Form.Label>
+              <Form.Control
+                type={showPassword ? "text" : "password"}
+                placeholder="Entrez le mot de passe"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              />
+              <Form.Check
+                type="checkbox"
+                label="Afficher le mot de passe"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="formRole">
+              <Form.Label>Rôle</Form.Label>
+              <Form.Select
+                value={newUser.role}
+                onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              >
+                <option value="UTILISATEUR">UTILISATEUR</option>
+                <option value="RESPONSABLE">RESPONSABLE</option>
+                <option value="ADMINISTRATEUR">ADMINISTRATEUR</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+            Annuler
+          </Button>
+          <Button variant="primary" onClick={handleAddUser}>
+            Ajouter
           </Button>
         </Modal.Footer>
       </Modal>

@@ -6,7 +6,6 @@ import Formations from './pages/Formations';
 import Participants from './pages/Participants';
 import Utilisateur from './pages/Utilisateur';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Domaine from './pages/Domaine';
 import PrivateRoute from './components/PrivateRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -41,8 +40,6 @@ function AppRoutes() {
 
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
         {/* Routes that require authentication */}
         <Route element={<PrivateRoute />}>
           {/* Only RESPONSABLE can access dashboard, others redirected to /formations */}
