@@ -69,7 +69,7 @@ const Dashboard = () => {
         });
         setLoading(false);
       } catch (error) {
-        setError("Error loading dashboard statistics");
+        setError("Erreur lors du chargement des statistiques du tableau de bord");
         setLoading(false);
         console.error(error);
       }
@@ -130,7 +130,7 @@ const Dashboard = () => {
     return (
       <Container className="my-5 text-center">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2">Loading dashboard...</p>
+        <p className="mt-2">Chargement du tableau de bord...</p>
       </Container>
     );
   }
@@ -139,7 +139,7 @@ const Dashboard = () => {
     <Container className="py-4">
       <h1 className="mb-4 d-flex align-items-center">
         <FaChartBar className="me-3 text-primary" />
-        Training Center Dashboard
+        Tableau de Bord du Centre de Formation
       </h1>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -153,7 +153,7 @@ const Dashboard = () => {
                 <FaUsers size={24} className="text-primary" />
               </div>
               <h3>{stats.participantsCount}</h3>
-              <p className="text-muted mb-0">Total Participants</p>
+              <p className="text-muted mb-0">Nombre Total de Participants</p>
             </Card.Body>
           </Card>
         </Col>
@@ -165,7 +165,7 @@ const Dashboard = () => {
                 <FaMoneyBillWave size={24} className="text-success" />
               </div>
               <h3>{stats.totalBudget?.toLocaleString()} TND</h3>
-              <p className="text-muted mb-0">Total Budget</p>
+              <p className="text-muted mb-0">Budget Total</p>
             </Card.Body>
           </Card>
         </Col>
@@ -177,7 +177,7 @@ const Dashboard = () => {
                 <FaLayerGroup size={24} className="text-warning" />
               </div>
               <h3>{stats.totalFormations}</h3>
-              <p className="text-muted mb-0">Total Formations</p>
+              <p className="text-muted mb-0">Nombre Total de Formations</p>
             </Card.Body>
           </Card>
         </Col>
@@ -189,7 +189,7 @@ const Dashboard = () => {
                 <FaBook size={24} className="text-info" />
               </div>
               <h3>{stats.activeFormations}</h3>
-              <p className="text-muted mb-0">Active Formations</p>
+              <p className="text-muted mb-0">Formations Actives</p>
             </Card.Body>
           </Card>
         </Col>
@@ -202,7 +202,7 @@ const Dashboard = () => {
             <Card.Body>
               <div className="d-flex align-items-center mb-3">
                 <FaTrophy className="text-warning me-2" size={20} />
-                <h5 className="mb-0">Top Formations by Participation</h5>
+                <h5 className="mb-0">Formations les Plus Populaires</h5>
               </div>
               <div style={{ height: '300px' }}>
                 <Bar 
@@ -233,7 +233,7 @@ const Dashboard = () => {
             <Card.Body>
               <div className="d-flex align-items-center mb-3">
                 <FaChartPie className="text-info me-2" size={20} />
-                <h5 className="mb-0">Yearly Budget Allocation</h5>
+                <h5 className="mb-0">Répartition Annuelle du Budget</h5>
               </div>
               <div style={{ height: '300px' }}>
                 <Line 
@@ -267,7 +267,7 @@ const Dashboard = () => {
       <Card.Body>
         <div className="d-flex align-items-center mb-3">
           <FaChartPie className="text-danger me-2" size={20} />
-          <h5 className="mb-0">Formations by Domain</h5>
+          <h5 className="mb-0">Formations par Domaine</h5>
         </div>
         <div style={{ height: '300px' }}>
           <Bar 
@@ -305,7 +305,7 @@ const Dashboard = () => {
       <Card.Body>
         <div className="d-flex align-items-center mb-3">
           <FaMoneyBillWave className="text-success me-2" size={20} />
-          <h5 className="mb-0">Top Domains by Budget</h5>
+          <h5 className="mb-0">Domaines Principaux par Budget</h5>
         </div>
         <div style={{ height: '300px' }}>
           <Pie 
@@ -338,7 +338,7 @@ const Dashboard = () => {
       <Card.Body>
         <div className="d-flex align-items-center mb-3">
           <FaChalkboardTeacher className="text-danger me-2" size={20} />
-          <h5 className="mb-0">Top Performing Formateurs</h5>
+          <h5 className="mb-0"> Formateurs les Plus Performants</h5>
         </div>
         
         {stats.bestFormateurs && Object.keys(stats.bestFormateurs).length > 0 ? (

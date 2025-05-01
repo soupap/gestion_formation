@@ -83,6 +83,8 @@ const AddFormation = ({ onFormationAdded, onClose }) => {
                 <Form.Group className="mb-3">
                     <Form.Label>Year</Form.Label>
                     <Form.Control
+                        min ={new Date().getFullYear()}
+
                         type="number"
                         value={formData.annee}
                         onChange={(e) => setFormData({ ...formData, annee: e.target.value })}
@@ -95,6 +97,8 @@ const AddFormation = ({ onFormationAdded, onClose }) => {
                         <Col>
                             <Form.Label>Start Date</Form.Label>
                             <Form.Control
+                                min={new Date().toISOString().split('T')[0]}
+                                
                                 type="date"
                                 value={formData.dateDebut}
                                 onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
