@@ -81,8 +81,11 @@ const Profile = () => {
       });
       
       setUser(response.data);
+      localStorage.setItem("token", response.data.token);
       setSuccessMessage('Profile updated successfully');
       setShowEditModal(false);
+      //refresh the page to reflect changes
+      window.location.reload();
     } catch (err) {
       // Custom error handling for Unauthorized/Invalid credentials
       const apiError = err.response?.data;

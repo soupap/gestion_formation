@@ -118,7 +118,7 @@ const Utilisateurs = () => {
     }
 
     try {
-      const response = await api.post('/api/v1/auth/register', newUser);
+      const response = await api.post('/utilisateurs', newUser);
       setUtilisateurs([...utilisateurs, response.data]);
       setToastType('success');
       setToastMessage("Utilisateur créé avec succès!");
