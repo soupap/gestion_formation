@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Table, Alert, Spinner, Modal,
-  Button, Badge, OverlayTrigger, Tooltip
+  Button, Badge, OverlayTrigger, Tooltip, Pagination
 } from 'react-bootstrap';
 import {
   FaUserPlus, FaTrashAlt, FaPen,
@@ -10,9 +10,7 @@ import {
 
 import AddFormation from './AddFormation';
 import EditFormation from './EditFormation';
-
 import AddParticipantToFormationModal from './AddParticipantToFormation';
-
 import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,6 +32,15 @@ const Formations = () => {
   const [allParticipants, setAllParticipants] = useState([]);
   const [selectedParticipantIds, setSelectedParticipantIds] = useState([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const formationsPerPage = 6;
+  const totalPages = Math.ceil(formations.length / formationsPerPage);
+  const paginatedFormations = formations.slice(
+    (currentPage - 1) * formationsPerPage,
+    currentPage * formationsPerPage
+  );
+
   useEffect(() => {
     fetchFormations();
   }, []);
@@ -43,6 +50,7 @@ const Formations = () => {
     api.get('/formations')
       .then(response => {
         setFormations(response.data);
+        setCurrentPage(1); // Reset page on new fetch
         setLoading(prev => ({ ...prev, formations: false }));
       })
       .catch((error) => {
@@ -71,13 +79,7 @@ const Formations = () => {
       })
       .catch((error) => {
         const apiError = error.response?.data;
-        if (apiError && (apiError.error || apiError.message)) {
-          setError(apiError.message);
-        } else if (typeof apiError === 'string') {
-          setError(apiError);
-        } else {
-          setError('Error loading participants');
-        }
+        setError(apiError?.message || 'Error loading participants');
         setLoading(prev => ({ ...prev, participants: false }));
       });
   };
@@ -97,13 +99,7 @@ const Formations = () => {
       fetchFormations();
     } catch (error) {
       const apiError = error.response?.data;
-      if (apiError && (apiError.error || apiError.message)) {
-        setError(apiError.message);
-      } else if (typeof apiError === 'string') {
-        setError(apiError);
-      } else {
-        setError('Error adding participants');
-      }
+      setError(apiError?.message || 'Error adding participants');
     } finally {
       setLoading(prev => ({ ...prev, addParticipants: false }));
     }
@@ -126,9 +122,7 @@ const Formations = () => {
         setFormations(prev => prev.filter(f => f.id !== selectedFormation.id));
         setShowDeleteModal(false);
       })
-      .catch(() => {
-        setError('Error deleting formation');
-      })
+      .catch(() => setError('Error deleting formation'))
       .finally(() => {
         setLoading(prev => ({ ...prev, delete: false }));
       });
@@ -143,6 +137,31 @@ const Formations = () => {
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('fr-FR', options);
+  };
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null;
+    return (
+      <Pagination className="justify-content-center mt-3">
+        <Pagination.Prev
+          onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+          disabled={currentPage === 1}
+        />
+        {[...Array(totalPages).keys()].map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={currentPage === index + 1}
+            onClick={() => setCurrentPage(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+        <Pagination.Next
+          onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+          disabled={currentPage === totalPages}
+        />
+      </Pagination>
+    );
   };
 
   return (
@@ -171,120 +190,120 @@ const Formations = () => {
           </Button>
         </Alert>
       ) : (
-        <Table bordered hover responsive>
-          <thead className="table-dark">
-            <tr>
-              <th>Titre</th>
-              <th>Dates</th>
-              <th>Durée</th>
-              <th>Domaine</th>
-              <th>Formateur</th>
-              <th className="text-end">Budget</th>
-              <th>Participants</th>
-              <th className="text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {formations.map(formation => (
-              <tr className="shadow-sm h-100"
-                style={{
-                  borderRadius: '16px',
-                  
-                  border: '1px solid #dee2e6',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                }} key={formation.id} onClick={() => navigate(`/formations/${formation.id}`)}>
-                <td>
-                  <strong>{formation.titre}</strong>
-                  <div className="text-muted small">{formation.lieu}</div>
-                </td>
-                <td>
-                  <div>{formatDate(formation.dateDebut)}</div>
-                  <div className="text-muted small">
-                    au {formatDate(formation.dateFin)}
-                  </div>
-                </td>
-                <td className="text-center">
-                  <Badge bg="info">{formation.duree} jours</Badge>
-                </td>
-                <td>{formation.domaine?.libelle || 'N/A'}</td>
-                <td>
-                  {formation.formateur?.nom ?
-                    `${formation.formateur.nom} ${formation.formateur.prenom}` :
-                    'N/A'}
-                </td>
-                <td className="text-end">
-                  <FaMoneyBillWave className="me-2" />
-                  {formation.budget?.toLocaleString('fr-FR')} TND
-                </td>
-                <td className="text-center">
-                  <Badge bg="success">
-                    {formation.participants?.length || 0}
-                  </Badge>
-                </td>
-                <td className="text-center">
-                  <div className="d-flex gap-2 justify-content-center">
-                    <OverlayTrigger overlay={<Tooltip>Add Participant</Tooltip>}>
-                      <Button
-                        variant="info"
-                        size="sm"
-                        className="p-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFormation(formation);
-                          fetchParticipants();
-                          setShowAddParticipantModal(true);
-                        }}
-                        disabled={loading.participants}
-                      >
-                        {loading.participants ? (
-                          <Spinner animation="border" size="sm" />
-                        ) : (
-                          <FaUserPlus />
-                        )}
-                      </Button>
-                    </OverlayTrigger>
-                    <OverlayTrigger overlay={<Tooltip>Edit</Tooltip>}>
-                      <Button
-                        variant="light"
-                        size="sm"
-                        className="p-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedFormation(formation);
-                          setShowEditModal(true);
-                        }}
-                        disabled={loading.participants}
-                      >
-                        {loading.participants ? (
-                          <Spinner animation="border" size="sm" />
-                        ) : (
-                          <FaPen />
-                        )}
-                      </Button>
-                    </OverlayTrigger>
-                    <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        className="p-2"
-                        onClick={() => {
-                          setSelectedFormation(formation);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        <FaTrashAlt />
-                      </Button>
-                    </OverlayTrigger>
-                  </div>
-                </td>
+        <>
+          <Table bordered hover responsive>
+            <thead className="table-dark">
+              <tr>
+                <th>Titre</th>
+                <th>Dates</th>
+                <th>Durée</th>
+                <th>Domaine</th>
+                <th>Formateur</th>
+                <th className="text-end">Budget</th>
+                <th>Participants</th>
+                <th className="text-center">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {paginatedFormations.map(formation => (
+                <tr
+                  className="shadow-sm h-100"
+                  style={{
+                    borderRadius: '16px',
+                    border: '1px solid #dee2e6',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                  }}
+                  key={formation.id}
+                  onClick={() => navigate(`/formations/${formation.id}`)}
+                >
+                  <td>
+                    <strong>{formation.titre}</strong>
+                    <div className="text-muted small">{formation.lieu}</div>
+                  </td>
+                  <td>
+                    <div>{formatDate(formation.dateDebut)}</div>
+                    <div className="text-muted small">au {formatDate(formation.dateFin)}</div>
+                  </td>
+                  <td className="text-center">
+                    <Badge bg="info">{formation.duree} jours</Badge>
+                  </td>
+                  <td>{formation.domaine?.libelle || 'N/A'}</td>
+                  <td>
+                    {formation.formateur?.nom
+                      ? `${formation.formateur.nom} ${formation.formateur.prenom}`
+                      : 'N/A'}
+                  </td>
+                  <td className="text-end">
+                    <FaMoneyBillWave className="me-2" />
+                    {formation.budget?.toLocaleString('fr-FR')} TND
+                  </td>
+                  <td className="text-center">
+                    <Badge bg="success">{formation.participants?.length || 0}</Badge>
+                  </td>
+                  <td className="text-center">
+                    <div className="d-flex gap-2 justify-content-center">
+                      <OverlayTrigger overlay={<Tooltip>Add Participant</Tooltip>}>
+                        <Button
+                          variant="info"
+                          size="sm"
+                          className="p-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFormation(formation);
+                            fetchParticipants();
+                            setShowAddParticipantModal(true);
+                          }}
+                          disabled={loading.participants}
+                        >
+                          {loading.participants ? (
+                            <Spinner animation="border" size="sm" />
+                          ) : (
+                            <FaUserPlus />
+                          )}
+                        </Button>
+                      </OverlayTrigger>
+                      <OverlayTrigger overlay={<Tooltip>Edit</Tooltip>}>
+                        <Button
+                          variant="light"
+                          size="sm"
+                          className="p-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedFormation(formation);
+                            setShowEditModal(true);
+                          }}
+                          disabled={loading.participants}
+                        >
+                          <FaPen />
+                        </Button>
+                      </OverlayTrigger>
+                      <OverlayTrigger overlay={<Tooltip>Delete Formation</Tooltip>}>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="p-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            
+                            setSelectedFormation(formation);
+                            setShowDeleteModal(true);
+                          }}
+                        >
+                          <FaTrashAlt />
+                        </Button>
+                      </OverlayTrigger>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          {renderPagination()}
+        </>
       )}
 
-      {/* Shared Add Participants Modal */}
+      {/* Modals */}
       <AddParticipantToFormationModal
         show={showAddParticipantModal}
         onHide={() => {
@@ -299,7 +318,6 @@ const Formations = () => {
         onConfirm={handleAddParticipants}
       />
 
-      {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Deletion</Modal.Title>
@@ -320,18 +338,11 @@ const Formations = () => {
             onClick={handleDeleteFormation}
             disabled={loading.delete}
           >
-            {loading.delete ? (
-              <>
-                <Spinner as="span" size="sm" animation="border" /> Deleting...
-              </>
-            ) : (
-              'Delete'
-            )}
+            {loading.delete ? <Spinner as="span" size="sm" animation="border" /> : 'Delete'}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Add Formation Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
@@ -346,7 +357,7 @@ const Formations = () => {
           />
         </Modal.Body>
       </Modal>
-      {/* Edit Formation Modal */}
+
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>

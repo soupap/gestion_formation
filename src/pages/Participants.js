@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import {
   Container, Row, Col, Card, Button, Alert,
-  Modal, Spinner, Form, Badge
+  Modal, Spinner, Form, Badge, Pagination, InputGroup
 } from 'react-bootstrap';
 import { api } from '../services/api';
 import AddParticipant from './AddParticipant';
-import { FaUserPlus, FaInfoCircle, FaTrashAlt, FaTimes, FaEdit, FaGraduationCap } from 'react-icons/fa';
+import { FaUserPlus, FaTrashAlt, FaTimes, FaEdit, FaGraduationCap, FaSearch } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const ParticipantsList = () => {
@@ -29,6 +29,13 @@ const ParticipantsList = () => {
     update: false,
   });
   const [hoveredCardId, setHoveredCardId] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [participantsPerPage] = useState(6);
+  
+  // Search filter state
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,6 +138,45 @@ const ParticipantsList = () => {
     }
   };
 
+  // Filter participants based on search term
+  const filteredParticipants = participants.filter(participant => {
+    const fullName = `${participant.nom} ${participant.prenom}`.toLowerCase();
+    return fullName.includes(searchTerm.toLowerCase());
+  });
+
+  // Calculate pagination
+  const indexOfLastParticipant = currentPage * participantsPerPage;
+  const indexOfFirstParticipant = indexOfLastParticipant - participantsPerPage;
+  const currentParticipants = filteredParticipants.slice(indexOfFirstParticipant, indexOfLastParticipant);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredParticipants.length / participantsPerPage);
+
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  // Generate pagination items
+  const paginationItems = [];
+  for (let number = 1; number <= totalPages; number++) {
+    paginationItems.push(
+      <Pagination.Item 
+        key={number} 
+        active={number === currentPage}
+        onClick={() => handlePageChange(number)}
+      >
+        {number}
+      </Pagination.Item>
+    );
+  }
+
+  // Handle search
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
   return (
     <Container className="mt-4">
       <h1 
@@ -154,7 +200,7 @@ const ParticipantsList = () => {
         </Alert>
       )}
 
-      <div className="d-flex justify-content-between mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <Button 
           variant="primary" 
           onClick={() => setShowAddModal(true)}
@@ -165,6 +211,18 @@ const ParticipantsList = () => {
         >
           Ajouter un participant
         </Button>
+        
+        <InputGroup style={{ maxWidth: '300px' }}>
+          <InputGroup.Text>
+            <FaSearch />
+          </InputGroup.Text>
+          <Form.Control
+            placeholder="Rechercher par nom..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            style={{ borderRadius: '0 8px 8px 0' }}
+          />
+        </InputGroup>
       </div>
 
       {loading.participants ? (
@@ -172,141 +230,164 @@ const ParticipantsList = () => {
           <Spinner animation="border" variant="primary" />
           <p>Chargement des participants...</p>
         </div>
-      ) : participants.length > 0 ? (
-        <Row>
-          {participants.map((participant) => (
-            <Col key={participant.id} md={4} className="mb-3">
-              <Card
-                className="shadow-sm h-100"
-                style={{
-                  borderRadius: '16px',
-                  background: hoveredCardId === participant.id ? '#f8f9fa' : '#ffffff',
-                  border: '1px solid #e0e0e0',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  transform: hoveredCardId === participant.id ? 'translateY(-2px)' : 'none',
-                  boxShadow: hoveredCardId === participant.id ? '0 4px 8px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)'
-                }}
-                onClick={() => navigate(`/participants/${participant.id}`)}
-                onMouseEnter={() => setHoveredCardId(participant.id)}
-                onMouseLeave={() => setHoveredCardId(null)}
-              >
-                <Card.Body>
-                  <Card.Title 
-                    className="mb-3" 
-                    style={{
-                      fontFamily: 'Segoe UI, sans-serif',
-                      fontWeight: '600',
-                      fontSize: '1.25rem',
-                      color: '#2c3e50',
-                      borderBottom: '1px solid #eee',
-                      paddingBottom: '0.5rem'
-                    }}
-                  >
-                    {participant.nom} {participant.prenom}
-                    <Badge 
-                      bg="info" 
-                      className="ms-2" 
-                      style={{ 
-                        fontSize: '0.75rem',
-                        fontWeight: 'normal'
+      ) : filteredParticipants.length > 0 ? (
+        <>
+          <Row>
+            {currentParticipants.map((participant) => (
+              <Col key={participant.id} md={4} className="mb-3">
+                <Card
+                  className="shadow-sm h-100"
+                  style={{
+                    borderRadius: '16px',
+                    background: hoveredCardId === participant.id ? '#f8f9fa' : '#ffffff',
+                    border: '1px solid #e0e0e0',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    transform: hoveredCardId === participant.id ? 'translateY(-2px)' : 'none',
+                    boxShadow: hoveredCardId === participant.id ? '0 4px 8px rgba(0,0,0,0.1)' : '0 2px 4px rgba(0,0,0,0.05)'
+                  }}
+                  onClick={() => navigate(`/participants/${participant.id}`)}
+                  onMouseEnter={() => setHoveredCardId(participant.id)}
+                  onMouseLeave={() => setHoveredCardId(null)}
+                >
+                  <Card.Body>
+                    <Card.Title 
+                      className="mb-3" 
+                      style={{
+                        fontFamily: 'Segoe UI, sans-serif',
+                        fontWeight: '600',
+                        fontSize: '1.25rem',
+                        color: '#2c3e50',
+                        borderBottom: '1px solid #eee',
+                        paddingBottom: '0.5rem'
                       }}
                     >
-                      {participant.profil?.libelle || 'N/A'}
-                    </Badge>
-                  </Card.Title>
-                  
-                  <div style={{ marginBottom: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ 
-                        display: 'inline-block',
-                        width: '24px',
-                        color: '#6c757d'
-                      }}>
-                        ✉️
-                      </span>
-                      <span style={{ marginLeft: '0.5rem' }}>
-                        {participant.email || 'N/A'}
-                      </span>
-                    </div>
+                      {participant.nom} {participant.prenom}
+                      <Badge 
+                        bg="info" 
+                        className="ms-2" 
+                        style={{ 
+                          fontSize: '0.75rem',
+                          fontWeight: 'normal'
+                        }}
+                      >
+                        {participant.profil?.libelle || 'N/A'}
+                      </Badge>
+                    </Card.Title>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ 
-                        display: 'inline-block',
-                        width: '24px',
-                        color: '#6c757d'
-                      }}>
-                        📞
-                      </span>
-                      <span style={{ marginLeft: '0.5rem' }}>
-                        {participant.tel || 'N/A'}
-                      </span>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          width: '24px',
+                          color: '#6c757d'
+                        }}>
+                          ✉️
+                        </span>
+                        <span style={{ marginLeft: '0.5rem' }}>
+                          {participant.email || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          width: '24px',
+                          color: '#6c757d'
+                        }}>
+                          📞
+                        </span>
+                        <span style={{ marginLeft: '0.5rem' }}>
+                          {participant.tel || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          width: '24px',
+                          color: '#6c757d'
+                        }}>
+                          🏢
+                        </span>
+                        <span style={{ marginLeft: '0.5rem' }}>
+                          {participant.structure || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span style={{ 
+                          display: 'inline-block',
+                          width: '24px',
+                          color: '#6c757d'
+                        }}>
+                          <FaGraduationCap />
+                        </span>
+                        <span style={{ marginLeft: '0.5rem' }}>
+                          Formations: <Badge bg="success">{participant.formations?.length || 0}</Badge>
+                        </span>
+                      </div>
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ 
-                        display: 'inline-block',
-                        width: '24px',
-                        color: '#6c757d'
-                      }}>
-                        🏢
-                      </span>
-                      <span style={{ marginLeft: '0.5rem' }}>
-                        {participant.structure || 'N/A'}
-                      </span>
-                    </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <span style={{ 
-                        display: 'inline-block',
-                        width: '24px',
-                        color: '#6c757d'
-                      }}>
-                        <FaGraduationCap />
-                      </span>
-                      <span style={{ marginLeft: '0.5rem' }}>
-                        Formations: <Badge bg="success">{participant.formations?.length || 0}</Badge>
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="d-flex gap-2 justify-content-end mt-3">
-                    <Button 
-                      variant="success" 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); openEnrollModal(participant); }} 
-                      title="Enroll"
-                      style={{ minWidth: '34px' }}
-                    >
-                      <FaUserPlus />
-                    </Button>
-                    <Button 
-                      variant="warning" 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); openEditModal(participant); }} 
-                      title="Edit"
-                      style={{ minWidth: '34px' }}
-                    >
-                      <FaEdit />
-                    </Button>
-                    <Button 
-                      variant="danger" 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); openDeleteModal(participant); }} 
-                      title="Delete"
-                      style={{ minWidth: '34px' }}
-                    >
-                      <FaTrashAlt />
-                    </Button>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                    <div className="d-flex gap-2 justify-content-end mt-3">
+                      <Button 
+                        variant="success" 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); openEnrollModal(participant); }} 
+                        title="Enroll"
+                        style={{ minWidth: '34px' }}
+                      >
+                        <FaUserPlus />
+                      </Button>
+                      <Button 
+                        variant="warning" 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); openEditModal(participant); }} 
+                        title="Edit"
+                        style={{ minWidth: '34px' }}
+                      >
+                        <FaEdit />
+                      </Button>
+                      <Button 
+                        variant="danger" 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); openDeleteModal(participant); }} 
+                        title="Delete"
+                        style={{ minWidth: '34px' }}
+                      >
+                        <FaTrashAlt />
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+          
+          {/* Pagination */}
+          <div className="d-flex justify-content-center mt-4">
+            <Pagination>
+              <Pagination.First onClick={() => handlePageChange(1)} disabled={currentPage === 1} />
+              <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+              {paginationItems}
+              <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+              <Pagination.Last onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} />
+            </Pagination>
+          </div>
+          
+          {/* Page info */}
+          <div className="text-center text-muted mt-2">
+            <small>
+              Affichage de {indexOfFirstParticipant + 1} à {Math.min(indexOfLastParticipant, filteredParticipants.length)} sur {filteredParticipants.length} participants
+              {searchTerm && ` (filtré par "${searchTerm}")`}
+            </small>
+          </div>
+        </>
       ) : (
         <Alert variant="info" style={{ borderRadius: '10px' }}>
-          Aucun participant trouvé.
+          {searchTerm 
+            ? `Aucun participant trouvé pour la recherche "${searchTerm}".` 
+            : 'Aucun participant trouvé.'}
         </Alert>
       )}
 
